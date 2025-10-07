@@ -2,11 +2,12 @@
 
 > **🔗 [Try the tool live here!](https://reecebuckle.github.io/PDF-Utilities/)**
 
-A privacy-focused, client-side PDF utility tool for merging PDF files directly in your browser.
+A privacy-focused, client-side PDF utility tool for merging and splitting PDF files directly in your browser.
 
 ## Features
 
 - **Merge PDFs**: Combine multiple PDF files into a single document
+- **Split PDFs**: Extract specific page ranges or split into individual pages
 - **Privacy First**: All processing happens in your browser - no files are uploaded to any server
 - **Free & Open Source**: No costs, no accounts, no tracking
 - **Mobile Friendly**: Works on desktop and mobile devices
@@ -14,10 +15,17 @@ A privacy-focused, client-side PDF utility tool for merging PDF files directly i
 
 ## How It Works
 
-1. Upload or drag-and-drop your PDF files
-2. Reorder them as needed
-3. Click "Merge PDFs"
-4. Download your combined PDF
+### Merge PDFs
+1. Select the "Merge PDFs" tool
+2. Upload or drag-and-drop your PDF files
+3. Reorder them as needed
+4. Click "Merge PDFs" and download your combined PDF
+
+### Split PDFs
+1. Select the "Split PDF" tool
+2. Upload a single PDF file
+3. Choose to split by page ranges (e.g., 1-5, 8-10) or into individual pages
+4. Download your split PDF files
 
 All processing happens entirely in your browser using client-side JavaScript. Your documents never leave your device.
 
