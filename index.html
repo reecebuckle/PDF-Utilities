@@ -16,42 +16,158 @@
     <div id="app">
         <header class="header">
             <h1>PDF Utility Tool</h1>
-            <p class="subtitle">Merge PDFs privately in your browser</p>
+            <p class="subtitle">Merge, split, and convert PDFs privately in your browser</p>
         </header>
 
-        <main class="main-content">
-            <!-- File Upload Section -->
-            <section class="upload-section">
-                <div id="drop-zone" class="drop-zone">
-                    <div class="drop-zone-content">
-                        <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7,10 12,15 17,10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
+        <!-- Tool Selection -->
+        <section class="tool-selection" id="tool-selection">
+            <div class="tool-cards">
+                <div class="tool-card active" data-tool="merge">
+                    <div class="tool-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10,9 9,9 8,9"></polyline>
                         </svg>
-                        <h2>Drop PDF files here</h2>
-                        <p>or <button type="button" class="browse-btn">browse files</button></p>
-                        <small>Only PDF files are supported</small>
                     </div>
-                    <input type="file" id="file-input" accept=".pdf" multiple hidden>
+                    <h3>Merge PDFs</h3>
+                    <p>Combine multiple PDF files into one document</p>
                 </div>
-            </section>
-
-            <!-- File List Section -->
-            <section class="file-list-section" id="file-list-section" style="display: none;">
-                <h3>Selected Files</h3>
-                <div id="file-list" class="file-list"></div>
-                <div class="actions">
-                    <button type="button" id="merge-btn" class="btn btn-primary" disabled>
-                        Merge PDFs
-                    </button>
-                    <button type="button" id="clear-btn" class="btn btn-secondary">
-                        Clear All
-                    </button>
+                
+                <div class="tool-card" data-tool="split">
+                    <div class="tool-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                            <line x1="9" y1="15" x2="15" y2="9"></line>
+                        </svg>
+                    </div>
+                    <h3>Split PDF</h3>
+                    <p>Extract pages or split PDF into multiple files</p>
                 </div>
-            </section>
+                
+                <div class="tool-card disabled" data-tool="advanced-merge">
+                    <div class="tool-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                            <rect x="8" y="13" width="8" height="4"></rect>
+                        </svg>
+                    </div>
+                    <h3>Advanced Merge</h3>
+                    <p>Select specific pages from multiple PDFs</p>
+                    <span class="coming-soon">Coming Soon</span>
+                </div>
+                
+                <div class="tool-card disabled" data-tool="word-convert">
+                    <div class="tool-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <line x1="16" y1="21" x2="8" y2="21"></line>
+                        </svg>
+                    </div>
+                    <h3>Word to PDF</h3>
+                    <p>Convert Word documents to PDF format</p>
+                    <span class="coming-soon">Coming Soon</span>
+                </div>
+            </div>
+        </section>
 
-            <!-- Progress Section -->
+        <main class="main-content" id="main-content">
+            <!-- Merge Tool -->
+            <div class="tool-container" id="merge-tool" style="display: block;">
+                <!-- File Upload Section -->
+                <section class="upload-section">
+                    <div id="drop-zone" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7,10 12,15 17,10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <h2>Drop PDF files here</h2>
+                            <p>or <button type="button" class="browse-btn">browse files</button></p>
+                            <small>Only PDF files are supported</small>
+                        </div>
+                        <input type="file" id="file-input" accept=".pdf" multiple hidden>
+                    </div>
+                </section>
+
+                <!-- File List Section -->
+                <section class="file-list-section" id="file-list-section" style="display: none;">
+                    <h3>Selected Files</h3>
+                    <div id="file-list" class="file-list"></div>
+                    <div class="actions">
+                        <button type="button" id="merge-btn" class="btn btn-primary" disabled>
+                            Merge PDFs
+                        </button>
+                        <button type="button" id="clear-btn" class="btn btn-secondary">
+                            Clear All
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Split Tool -->
+            <div class="tool-container" id="split-tool" style="display: none;">
+                <!-- File Upload Section for Splitting -->
+                <section class="upload-section">
+                    <div id="split-drop-zone" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14,2 14,8 20,8"></polyline>
+                                <line x1="9" y1="15" x2="15" y2="9"></line>
+                            </svg>
+                            <h2>Drop a PDF file here</h2>
+                            <p>or <button type="button" class="split-browse-btn">browse file</button></p>
+                            <small>Select one PDF file to split</small>
+                        </div>
+                        <input type="file" id="split-file-input" accept=".pdf" hidden>
+                    </div>
+                </section>
+
+                <!-- Split Options Section -->
+                <section class="split-options-section" id="split-options-section" style="display: none;">
+                    <h3>Split Options</h3>
+                    <div class="split-info">
+                        <p id="split-file-info">File: <span id="split-filename"></span></p>
+                        <p id="split-page-count">Pages: <span id="split-pages"></span></p>
+                    </div>
+                    
+                    <div class="split-methods">
+                        <div class="split-method">
+                            <input type="radio" id="split-ranges" name="split-method" value="ranges" checked>
+                            <label for="split-ranges">Split by page ranges</label>
+                            <div class="split-ranges-input" id="split-ranges-input">
+                                <input type="text" id="page-ranges" placeholder="e.g., 1-5, 8-10, 15" />
+                                <small>Enter page ranges separated by commas</small>
+                            </div>
+                        </div>
+                        
+                        <div class="split-method">
+                            <input type="radio" id="split-all" name="split-method" value="all">
+                            <label for="split-all">Split into individual pages</label>
+                        </div>
+                    </div>
+                    
+                    <div class="actions">
+                        <button type="button" id="split-btn" class="btn btn-primary">
+                            Split PDF
+                        </button>
+                        <button type="button" id="split-clear-btn" class="btn btn-secondary">
+                            Clear
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Shared Progress Section -->
             <section class="progress-section" id="progress-section" style="display: none;">
                 <div class="progress-container">
                     <div class="progress-bar">
@@ -61,24 +177,22 @@
                 </div>
             </section>
 
-            <!-- Result Section -->
+            <!-- Shared Result Section -->
             <section class="result-section" id="result-section" style="display: none;">
                 <div class="result-content">
                     <svg class="success-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                         <polyline points="22,4 12,14.01 9,11.01"></polyline>
                     </svg>
-                    <h3>PDF Merged Successfully!</h3>
-                    <button type="button" id="download-btn" class="btn btn-primary">
-                        Download Merged PDF
-                    </button>
+                    <h3 id="result-title">Operation Completed Successfully!</h3>
+                    <div id="result-downloads"></div>
                     <button type="button" id="start-over-btn" class="btn btn-secondary">
                         Start Over
                     </button>
                 </div>
             </section>
 
-            <!-- Error Section -->
+            <!-- Shared Error Section -->
             <section class="error-section" id="error-section" style="display: none;">
                 <div class="error-content">
                     <svg class="error-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -6,6 +6,8 @@ import { FileListManager } from './FileListManager.js';
 import { PDFProcessor } from './PDFProcessor.js';
 import { UIController } from './UIController.js';
 import { ErrorHandler } from './ErrorHandler.js';
+import { ToolManager } from './ToolManager.js';
+import { SplitTool } from './SplitTool.js';
 
 export class AppController {
     constructor() {
@@ -22,6 +24,10 @@ export class AppController {
         this.pdfProcessor = new PDFProcessor((progress) => {
             this.handleProgress(progress);
         });
+
+        // Initialize tool management
+        this.toolManager = new ToolManager();
+        this.splitTool = new SplitTool(this.uiController, this.errorHandler);
 
         // Will be initialized in init()
         this.fileUploadHandler = null;
@@ -75,6 +81,9 @@ export class AppController {
             onStartOver: () => this.handleStartOver(),
             onRetry: () => this.handleRetry()
         });
+
+        // Set up tool manager
+        this.toolManager.onToolChange = (toolName) => this.handleToolChange(toolName);
 
         // Handle browser compatibility warnings
         this.errorHandler.checkBrowserCompatibility();
@@ -215,9 +224,31 @@ export class AppController {
     }
 
     handleStartOver() {
-        this.handleClearRequest();
+        const currentTool = this.toolManager.getCurrentTool();
+        
+        if (currentTool === 'merge') {
+            this.handleClearRequest();
+        } else if (currentTool === 'split') {
+            this.splitTool.reset();
+        }
+        
         this.uiController.reset();
         this.cleanup();
+    }
+
+    handleToolChange(toolName) {
+        // Clean up current tool state
+        this.cleanup();
+        this.uiController.reset();
+        
+        // Tool-specific initialization if needed
+        if (toolName === 'merge') {
+            // Merge tool is already initialized
+        } else if (toolName === 'split') {
+            // Split tool is already initialized
+        }
+        
+        console.log(`Switched to ${toolName} tool`);
     }
 
     handleRetry() {
