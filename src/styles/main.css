@@ -1296,4 +1296,21 @@ DF Preview Styles */
         width: 45px;
         height: 63px;
     }
+}/* Ensu
+re split browse button matches merge browse button */
+.split-browse-btn {
+    /* Inherits all styles from .browse-btn */
+}
+
+/* Result downloads styling */
+#result-downloads .btn {
+    margin: 0.5rem;
+}
+
+#result-downloads .btn:first-child {
+    margin-left: 0;
+}
+
+#result-downloads .btn:last-child {
+    margin-right: 0;
 }

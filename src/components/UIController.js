@@ -15,7 +15,6 @@ export class UIController {
             progressFill: document.getElementById('progress-fill'),
             progressText: document.getElementById('progress-text'),
             errorMessage: document.getElementById('error-message'),
-            downloadBtn: document.getElementById('download-btn'),
             mergeBtn: document.getElementById('merge-btn'),
             clearBtn: document.getElementById('clear-btn'),
             startOverBtn: document.getElementById('start-over-btn'),
@@ -71,11 +70,8 @@ export class UIController {
         
         // Set up new download
         this.currentDownloadUrl = downloadUrl;
-        if (this.elements.downloadBtn) {
-            this.elements.downloadBtn.onclick = () => {
-                this.downloadFile(downloadUrl, filename);
-            };
-        }
+        
+        // Note: Download button setup is now handled by individual tools
     }
 
     // Show error message

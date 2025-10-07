@@ -165,6 +165,45 @@ export class AppController {
         }
     }
 
+    showMergeSuccess(downloadUrl, filename) {
+        // Update result title
+        const resultTitle = document.getElementById('result-title');
+        if (resultTitle) {
+            resultTitle.textContent = 'PDF Merged Successfully!';
+        }
+
+        // Create download button for merge
+        const resultDownloads = document.getElementById('result-downloads');
+        if (resultDownloads) {
+            resultDownloads.innerHTML = `
+                <button type="button" id="download-btn" class="btn btn-primary">
+                    Download Merged PDF
+                </button>
+            `;
+            
+            const downloadBtn = document.getElementById('download-btn');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', () => {
+                    this.downloadFile(downloadUrl, filename);
+                });
+            }
+        }
+
+        // Show result section
+        this.uiController.sections.result.style.display = 'block';
+    }
+
+    downloadFile(url, filename) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     async handleMergeRequest() {
         if (this.state.isProcessing) {
             return;
@@ -219,8 +258,8 @@ export class AppController {
                 filename: filename
             };
 
-            // Show success
-            this.uiController.showSuccess(downloadUrl, filename);
+            // Show success with download
+            this.showMergeSuccess(downloadUrl, filename);
             this.uiController.showNotification('PDF merged successfully!', 'success');
 
         } catch (error) {
