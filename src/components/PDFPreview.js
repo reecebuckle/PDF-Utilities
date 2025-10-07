@@ -30,9 +30,16 @@ export class PDFPreview {
             const pagesToRender = Math.min(pageCount, maxPages);
             
             for (let pageNum = 1; pageNum <= pagesToRender; pageNum++) {
-                const page = await pdf.getPage(pageNum);
-                const thumbnail = await this.renderPageThumbnail(page, pageNum);
-                thumbnails.push(thumbnail);
+                try {
+                    const page = await pdf.getPage(pageNum);
+                    const thumbnail = await this.renderPageThumbnail(page, pageNum);
+                    thumbnails.push(thumbnail);
+                } catch (error) {
+                    console.warn(`Failed to generate thumbnail for page ${pageNum}:`, error);
+                    // Add placeholder thumbnail for failed pages
+                    const placeholder = this.createPlaceholderThumbnail(pageNum);
+                    thumbnails.push(placeholder);
+                }
             }
             
             const result = {
@@ -56,40 +63,87 @@ export class PDFPreview {
     }
 
     async loadPDFWithPDFJS(uint8Array) {
-        // For now, we'll create a simple fallback that shows page count
-        // TODO: Integrate PDF.js for actual thumbnail rendering
-        
-        // Use PDF-lib to get page count
-        const pdf = await loadPDFFromBytes(uint8Array);
-        const pageCount = pdf.getPageCount();
-        
-        return {
-            numPages: pageCount,
-            getPage: async (pageNum) => {
-                return {
-                    pageNumber: pageNum,
-                    // Mock page object - in real implementation this would be PDF.js page
-                    getViewport: () => ({ width: 200, height: 280 })
-                };
-            }
-        };
+        try {
+            // Dynamically import PDF.js
+            const pdfjsLib = await import('pdfjs-dist');
+            
+            // Set worker source
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js`;
+            
+            // Load PDF with PDF.js
+            const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
+            const pdf = await loadingTask.promise;
+            
+            return pdf;
+            
+        } catch (error) {
+            console.warn('PDF.js not available, falling back to page count only:', error);
+            
+            // Fallback: Use PDF-lib to get page count
+            const pdf = await loadPDFFromBytes(uint8Array);
+            const pageCount = pdf.getPageCount();
+            
+            return {
+                numPages: pageCount,
+                getPage: async (pageNum) => {
+                    return {
+                        pageNumber: pageNum,
+                        getViewport: (options = {}) => ({ 
+                            width: options.scale ? 200 * options.scale : 200, 
+                            height: options.scale ? 280 * options.scale : 280 
+                        }),
+                        render: () => Promise.resolve() // Mock render
+                    };
+                }
+            };
+        }
     }
 
     async renderPageThumbnail(page, pageNum) {
-        // For now, create a placeholder thumbnail
-        // TODO: Use PDF.js to render actual page content
-        
-        const viewport = page.getViewport();
+        try {
+            // Try to render actual PDF content
+            const scale = 0.5; // Scale down for thumbnail
+            const viewport = page.getViewport({ scale });
+            
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            // Render the page
+            const renderContext = {
+                canvasContext: context,
+                viewport: viewport
+            };
+            
+            await page.render(renderContext).promise;
+            
+            return {
+                pageNumber: pageNum,
+                canvas: canvas,
+                dataUrl: canvas.toDataURL('image/png'),
+                width: canvas.width,
+                height: canvas.height
+            };
+            
+        } catch (error) {
+            console.warn(`Failed to render page ${pageNum}, using placeholder:`, error);
+            
+            // Fallback to placeholder
+            return this.createPlaceholderThumbnail(pageNum);
+        }
+    }
+
+    createPlaceholderThumbnail(pageNum) {
         const thumbnailWidth = 120;
-        const thumbnailHeight = Math.round((thumbnailWidth / viewport.width) * viewport.height);
+        const thumbnailHeight = 160;
         
-        // Create placeholder canvas
         const canvas = document.createElement('canvas');
         canvas.width = thumbnailWidth;
         canvas.height = thumbnailHeight;
         const ctx = canvas.getContext('2d');
         
-        // Draw placeholder
+        // Draw placeholder background
         ctx.fillStyle = '#f8fafc';
         ctx.fillRect(0, 0, thumbnailWidth, thumbnailHeight);
         
@@ -98,16 +152,16 @@ export class PDFPreview {
         ctx.lineWidth = 1;
         ctx.strokeRect(0, 0, thumbnailWidth, thumbnailHeight);
         
+        // Draw PDF icon
+        ctx.fillStyle = '#ef4444';
+        ctx.font = 'bold 16px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('PDF', thumbnailWidth / 2, thumbnailHeight / 2 - 10);
+        
         // Draw page number
         ctx.fillStyle = '#64748b';
         ctx.font = '14px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(`Page ${pageNum}`, thumbnailWidth / 2, thumbnailHeight / 2);
-        
-        // Draw PDF icon
-        ctx.fillStyle = '#ef4444';
-        ctx.font = '12px Inter, sans-serif';
-        ctx.fillText('PDF', thumbnailWidth / 2, thumbnailHeight / 2 + 20);
+        ctx.fillText(`Page ${pageNum}`, thumbnailWidth / 2, thumbnailHeight / 2 + 15);
         
         return {
             pageNumber: pageNum,

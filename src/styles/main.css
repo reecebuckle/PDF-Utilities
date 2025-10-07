@@ -1077,10 +1077,11 @@ DF Preview Styles */
 .thumbnail-image {
     width: 60px;
     height: 84px;
-    object-fit: cover;
+    object-fit: contain;
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    background: white;
 }
 
 .thumbnail-item.small .thumbnail-image {
@@ -1245,6 +1246,8 @@ DF Preview Styles */
 .file-item-preview .thumbnail-image {
     width: 40px;
     height: 56px;
+    object-fit: contain;
+    background: white;
 }
 
 .file-item-preview .page-label {
