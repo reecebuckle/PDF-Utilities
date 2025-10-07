@@ -1,6 +1,8 @@
 /**
  * FileListManager - Manages the display and reordering of selected files
  */
+import { PDFPreview } from './PDFPreview.js';
+
 export class FileListManager {
     constructor(container, onOrderChange) {
         this.container = container;
@@ -8,11 +10,14 @@ export class FileListManager {
         this.files = [];
         this.draggedElement = null;
         this.draggedIndex = null;
+        this.pdfPreview = new PDFPreview();
+        this.thumbnailsData = new Map();
+        this.showPreviews = true;
     }
 
-    addFiles(newFiles) {
+    async addFiles(newFiles) {
         // Add new files to the list
-        newFiles.forEach(file => {
+        for (const file of newFiles) {
             const fileItem = {
                 id: this.generateId(),
                 file: file,
@@ -22,7 +27,17 @@ export class FileListManager {
                 order: this.files.length
             };
             this.files.push(fileItem);
-        });
+            
+            // Generate thumbnails for preview
+            if (this.showPreviews) {
+                try {
+                    const thumbnails = await this.pdfPreview.generateThumbnails(file, 5);
+                    this.thumbnailsData.set(file, thumbnails);
+                } catch (error) {
+                    console.warn('Failed to generate thumbnails for', file.name, error);
+                }
+            }
+        }
 
         this.render();
         this.notifyOrderChange();
@@ -55,8 +70,20 @@ export class FileListManager {
 
     clear() {
         this.files = [];
+        this.thumbnailsData.clear();
         this.render();
         this.notifyOrderChange();
+    }
+
+    // Get thumbnails data for merge preview
+    getThumbnailsData() {
+        return this.thumbnailsData;
+    }
+
+    // Toggle preview display
+    setShowPreviews(show) {
+        this.showPreviews = show;
+        this.render();
     }
 
     updateOrder() {
@@ -85,6 +112,9 @@ export class FileListManager {
         div.dataset.fileId = fileItem.id;
         div.dataset.index = index;
 
+        const thumbnails = this.thumbnailsData.get(fileItem.file);
+        const pageCount = thumbnails ? thumbnails.totalPages : 0;
+
         div.innerHTML = `
             <div class="drag-handle" title="Drag to reorder">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -96,12 +126,49 @@ export class FileListManager {
             <div class="file-order">${index + 1}</div>
             <div class="file-info">
                 <div class="file-name" title="${fileItem.name}">${this.truncateFileName(fileItem.name)}</div>
-                <div class="file-size">${this.formatFileSize(fileItem.size)}</div>
+                <div class="file-size">${this.formatFileSize(fileItem.size)}${pageCount > 0 ? ` • ${pageCount} pages` : ''}</div>
             </div>
             <button type="button" class="remove-btn" title="Remove file" data-file-id="${fileItem.id}">
                 Remove
             </button>
         `;
+
+        // Add preview if available
+        if (this.showPreviews && thumbnails && thumbnails.thumbnails.length > 0) {
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'file-item-preview';
+            
+            const thumbnailGrid = document.createElement('div');
+            thumbnailGrid.className = 'thumbnail-grid';
+            
+            thumbnails.thumbnails.forEach(thumbnail => {
+                const thumbnailItem = document.createElement('div');
+                thumbnailItem.className = 'thumbnail-item';
+                
+                const img = document.createElement('img');
+                img.src = thumbnail.dataUrl;
+                img.alt = `Page ${thumbnail.pageNumber}`;
+                img.className = 'thumbnail-image';
+                
+                const pageLabel = document.createElement('div');
+                pageLabel.className = 'page-label';
+                pageLabel.textContent = thumbnail.pageNumber;
+                
+                thumbnailItem.appendChild(img);
+                thumbnailItem.appendChild(pageLabel);
+                thumbnailGrid.appendChild(thumbnailItem);
+            });
+            
+            if (thumbnails.hasMore) {
+                const moreIndicator = document.createElement('div');
+                moreIndicator.className = 'more-pages-indicator';
+                moreIndicator.textContent = `+${thumbnails.totalPages - thumbnails.thumbnails.length}`;
+                thumbnailGrid.appendChild(moreIndicator);
+            }
+            
+            previewDiv.appendChild(thumbnailGrid);
+            div.appendChild(previewDiv);
+        }
 
         this.setupDragAndDrop(div);
         this.setupRemoveButton(div);

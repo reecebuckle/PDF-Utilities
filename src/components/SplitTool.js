@@ -3,6 +3,7 @@
  */
 import { FileUploadHandler } from './FileUploadHandler.js';
 import { PDFSplitter } from './PDFSplitter.js';
+import { PDFPreview } from './PDFPreview.js';
 
 export class SplitTool {
     constructor(uiController, errorHandler) {
@@ -10,10 +11,13 @@ export class SplitTool {
         this.errorHandler = errorHandler;
         this.currentFile = null;
         this.pageCount = 0;
+        this.currentThumbnails = null;
         
         this.pdfSplitter = new PDFSplitter((progress) => {
             this.handleProgress(progress);
         });
+        
+        this.pdfPreview = new PDFPreview();
 
         this.initializeComponents();
         this.setupEventListeners();
@@ -38,14 +42,24 @@ export class SplitTool {
         const splitRanges = document.getElementById('split-ranges');
         const splitAll = document.getElementById('split-all');
         const rangesInput = document.getElementById('split-ranges-input');
+        const pageRangesInput = document.getElementById('page-ranges');
 
         if (splitRanges && splitAll && rangesInput) {
             splitRanges.addEventListener('change', () => {
                 rangesInput.style.display = splitRanges.checked ? 'block' : 'none';
+                this.updateSplitPreview();
             });
 
             splitAll.addEventListener('change', () => {
                 rangesInput.style.display = splitAll.checked ? 'none' : 'block';
+                this.updateSplitPreview();
+            });
+        }
+
+        // Page ranges input
+        if (pageRangesInput) {
+            pageRangesInput.addEventListener('input', () => {
+                this.updateSplitPreview();
             });
         }
 
@@ -86,8 +100,14 @@ export class SplitTool {
             this.pageCount = await this.pdfSplitter.getPageCount(file);
             this.currentFile = file;
             
+            // Generate thumbnails
+            this.currentThumbnails = await this.pdfPreview.generateThumbnails(file, 10);
+            
             // Update UI
             this.showSplitOptions(file.name, this.pageCount);
+            
+            // Show initial preview
+            this.updateSplitPreview();
             
         } catch (error) {
             this.errorHandler.handleFileSelectionError(error);
@@ -239,9 +259,65 @@ export class SplitTool {
         this.uiController.updateProgress(progress.percentage, progress.message);
     }
 
+    updateSplitPreview() {
+        if (!this.currentFile || !this.currentThumbnails) {
+            return;
+        }
+
+        // Remove existing preview
+        const existingPreview = document.getElementById('split-preview');
+        if (existingPreview) {
+            existingPreview.remove();
+        }
+
+        const splitMethod = document.querySelector('input[name="split-method"]:checked')?.value;
+        
+        if (splitMethod === 'all') {
+            // Show preview for all individual pages
+            const ranges = [];
+            for (let i = 1; i <= this.pageCount; i++) {
+                ranges.push({ start: i, end: i });
+            }
+            this.showSplitPreview(ranges);
+        } else if (splitMethod === 'ranges') {
+            // Show preview for specified ranges
+            const pageRanges = document.getElementById('page-ranges')?.value;
+            if (pageRanges && pageRanges.trim()) {
+                try {
+                    const ranges = this.pdfSplitter.validateAndParseRanges(pageRanges, this.pageCount);
+                    this.showSplitPreview(ranges);
+                } catch (error) {
+                    // Don't show preview for invalid ranges
+                }
+            }
+        }
+    }
+
+    showSplitPreview(ranges) {
+        if (!ranges || ranges.length === 0) {
+            return;
+        }
+
+        const splitPreview = this.pdfPreview.createSplitPreview(this.currentFile, this.currentThumbnails, ranges);
+        splitPreview.id = 'split-preview';
+        
+        // Insert after split options section
+        const splitOptionsSection = document.getElementById('split-options-section');
+        if (splitOptionsSection) {
+            splitOptionsSection.parentNode.insertBefore(splitPreview, splitOptionsSection.nextSibling);
+        }
+    }
+
     handleClear() {
         this.currentFile = null;
         this.pageCount = 0;
+        this.currentThumbnails = null;
+        
+        // Remove preview
+        const splitPreview = document.getElementById('split-preview');
+        if (splitPreview) {
+            splitPreview.remove();
+        }
         
         // Hide split options
         const splitOptionsSection = document.getElementById('split-options-section');

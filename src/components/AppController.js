@@ -103,10 +103,10 @@ export class AppController {
         });
     }
 
-    handleFilesSelected(files) {
+    async handleFilesSelected(files) {
         try {
             // Add files to the list
-            this.fileListManager.addFiles(files);
+            await this.fileListManager.addFiles(files);
             
             // Update state
             this.state.files = this.fileListManager.getOrderedFiles();
@@ -115,6 +115,11 @@ export class AppController {
             this.uiController.showFileList();
             this.uiController.setMergeButtonEnabled(this.state.files.length > 0);
             this.uiController.updateFileCount(this.state.files.length);
+            
+            // Show merge preview if multiple files
+            if (this.state.files.length > 1) {
+                this.showMergePreview();
+            }
             
             // Show success notification
             const fileCount = files.length;
@@ -132,6 +137,32 @@ export class AppController {
         this.state.files = files;
         this.uiController.setMergeButtonEnabled(files.length > 0);
         this.uiController.updateFileCount(files.length);
+        
+        // Update merge preview when order changes
+        if (files.length > 1) {
+            this.showMergePreview();
+        }
+    }
+
+    showMergePreview() {
+        const thumbnailsData = this.fileListManager.getThumbnailsData();
+        const pdfPreview = this.fileListManager.pdfPreview;
+        
+        // Find or create preview container
+        let previewContainer = document.getElementById('merge-preview');
+        if (previewContainer) {
+            previewContainer.remove();
+        }
+        
+        // Create new preview
+        const mergePreview = pdfPreview.createMergePreview(this.state.files, thumbnailsData);
+        mergePreview.id = 'merge-preview';
+        
+        // Insert after file list section
+        const fileListSection = document.getElementById('file-list-section');
+        if (fileListSection) {
+            fileListSection.parentNode.insertBefore(mergePreview, fileListSection.nextSibling);
+        }
     }
 
     async handleMergeRequest() {
