@@ -1,0 +1,21 @@
+{
+  "name": "pdf-utility-tool",
+  "version": "1.0.0",
+  "description": "A privacy-focused, client-side PDF utility tool for merging PDF files",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["pdf", "merge", "client-side", "privacy", "utility"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "terser": "^5.0.0"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1"
+  }
+}

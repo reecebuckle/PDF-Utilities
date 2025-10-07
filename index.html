@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Privacy-focused PDF utility tool for merging PDF files directly in your browser">
+    <meta name="keywords" content="pdf merge, pdf combine, client-side pdf, privacy pdf tool">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
+    <title>PDF Utility Tool - Merge PDFs Privately</title>
+    <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <h1>PDF Utility Tool</h1>
+            <p class="subtitle">Merge PDFs privately in your browser</p>
+        </header>
+
+        <main class="main-content">
+            <!-- File Upload Section -->
+            <section class="upload-section">
+                <div id="drop-zone" class="drop-zone">
+                    <div class="drop-zone-content">
+                        <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7,10 12,15 17,10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <h2>Drop PDF files here</h2>
+                        <p>or <button type="button" class="browse-btn">browse files</button></p>
+                        <small>Only PDF files are supported</small>
+                    </div>
+                    <input type="file" id="file-input" accept=".pdf" multiple hidden>
+                </div>
+            </section>
+
+            <!-- File List Section -->
+            <section class="file-list-section" id="file-list-section" style="display: none;">
+                <h3>Selected Files</h3>
+                <div id="file-list" class="file-list"></div>
+                <div class="actions">
+                    <button type="button" id="merge-btn" class="btn btn-primary" disabled>
+                        Merge PDFs
+                    </button>
+                    <button type="button" id="clear-btn" class="btn btn-secondary">
+                        Clear All
+                    </button>
+                </div>
+            </section>
+
+            <!-- Progress Section -->
+            <section class="progress-section" id="progress-section" style="display: none;">
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                    <p id="progress-text" class="progress-text">Processing...</p>
+                </div>
+            </section>
+
+            <!-- Result Section -->
+            <section class="result-section" id="result-section" style="display: none;">
+                <div class="result-content">
+                    <svg class="success-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22,4 12,14.01 9,11.01"></polyline>
+                    </svg>
+                    <h3>PDF Merged Successfully!</h3>
+                    <button type="button" id="download-btn" class="btn btn-primary">
+                        Download Merged PDF
+                    </button>
+                    <button type="button" id="start-over-btn" class="btn btn-secondary">
+                        Start Over
+                    </button>
+                </div>
+            </section>
+
+            <!-- Error Section -->
+            <section class="error-section" id="error-section" style="display: none;">
+                <div class="error-content">
+                    <svg class="error-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                    <h3>Something went wrong</h3>
+                    <p id="error-message" class="error-message"></p>
+                    <button type="button" id="retry-btn" class="btn btn-primary">
+                        Try Again
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>
+                <strong>Privacy First:</strong> All processing happens in your browser. 
+                No files are uploaded to any server.
+            </p>
+        </footer>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
