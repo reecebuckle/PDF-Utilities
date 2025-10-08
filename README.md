@@ -1,6 +1,6 @@
 # PDF Utility Tool
 
-> **🔗 [Try the tool live here!](https://reecebuckle.github.io/PDF-Utilities/)**
+> **🔗 [Try the tool live here!](https://reecebuckle.github.io/pdf-utilities/)**
 
 A privacy-focused, client-side PDF utility tool for merging and splitting PDF files directly in your browser.
 
