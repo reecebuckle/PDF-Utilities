@@ -1146,6 +1146,65 @@ lection */
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.merge-document-preview.compact {
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.document-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.document-order {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.document-info {
+    flex: 1;
+}
+
+.document-name {
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.document-pages {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+}
+
+.thumbnail-grid.compact-merge {
+    gap: 0.4rem;
+}
+
+.thumbnail-grid.compact-merge .thumbnail-item.small {
+    width: 60px;
+    height: 80px;
+}
+
+.thumbnail-grid.compact-merge .more-pages-indicator.small {
+    width: 60px;
+    height: 80px;
+    font-size: 0.7rem;
+}
+
 .merge-order-indicator {
     position: absolute;
     top: -8px;

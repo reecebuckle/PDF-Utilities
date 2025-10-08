@@ -147,12 +147,23 @@ export class AppController {
     }
 
     showMergePreview() {
-        // The FileListManager already shows thumbnails with the correct size
-        // No need for a separate merge preview - the file list IS the preview
-        // Remove any existing separate merge preview
-        const existingPreview = document.getElementById('merge-preview');
-        if (existingPreview) {
-            existingPreview.remove();
+        const thumbnailsData = this.fileListManager.getThumbnailsData();
+        const pdfPreview = this.fileListManager.pdfPreview;
+        
+        // Find or create preview container
+        let previewContainer = document.getElementById('merge-preview');
+        if (previewContainer) {
+            previewContainer.remove();
+        }
+        
+        // Create new preview
+        const mergePreview = pdfPreview.createMergePreview(this.state.files, thumbnailsData);
+        mergePreview.id = 'merge-preview';
+        
+        // Insert after file list section
+        const fileListSection = document.getElementById('file-list-section');
+        if (fileListSection) {
+            fileListSection.parentNode.insertBefore(mergePreview, fileListSection.nextSibling);
         }
     }
 

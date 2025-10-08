@@ -194,15 +194,8 @@ export class PDFPreview {
         files.forEach((file, index) => {
             const thumbnails = thumbnailsData.get(file);
             if (thumbnails && thumbnails.thumbnails.length > 0) {
-                const docPreview = this.createPreviewContainer(file, thumbnails);
-                docPreview.classList.add('merge-document-preview');
-                
-                // Add order indicator
-                const orderIndicator = document.createElement('div');
-                orderIndicator.className = 'merge-order-indicator';
-                orderIndicator.textContent = index + 1;
-                docPreview.appendChild(orderIndicator);
-                
+                // Create a compact document preview similar to split tool
+                const docPreview = this.createCompactDocumentPreview(file, thumbnails, index + 1);
                 documentsContainer.appendChild(docPreview);
             }
         });
@@ -211,6 +204,57 @@ export class PDFPreview {
         previewContainer.appendChild(documentsContainer);
         
         return previewContainer;
+    }
+
+    createCompactDocumentPreview(file, thumbnails, orderNumber) {
+        const docPreview = document.createElement('div');
+        docPreview.className = 'merge-document-preview compact';
+        
+        const header = document.createElement('div');
+        header.className = 'document-header';
+        header.innerHTML = `
+            <div class="document-order">${orderNumber}</div>
+            <div class="document-info">
+                <div class="document-name">${file.name}</div>
+                <div class="document-pages">${thumbnails.totalPages} pages</div>
+            </div>
+        `;
+        
+        const thumbnailGrid = document.createElement('div');
+        thumbnailGrid.className = 'thumbnail-grid compact-merge';
+        
+        // Show first few thumbnails
+        const maxThumbnails = Math.min(6, thumbnails.thumbnails.length);
+        for (let i = 0; i < maxThumbnails; i++) {
+            const thumbnail = thumbnails.thumbnails[i];
+            const thumbnailItem = document.createElement('div');
+            thumbnailItem.className = 'thumbnail-item small';
+            
+            const img = document.createElement('img');
+            img.src = thumbnail.dataUrl;
+            img.alt = `Page ${thumbnail.pageNumber}`;
+            img.className = 'thumbnail-image';
+            
+            const pageLabel = document.createElement('div');
+            pageLabel.className = 'page-label';
+            pageLabel.textContent = thumbnail.pageNumber;
+            
+            thumbnailItem.appendChild(img);
+            thumbnailItem.appendChild(pageLabel);
+            thumbnailGrid.appendChild(thumbnailItem);
+        }
+        
+        if (thumbnails.totalPages > maxThumbnails) {
+            const moreIndicator = document.createElement('div');
+            moreIndicator.className = 'more-pages-indicator small';
+            moreIndicator.textContent = `+${thumbnails.totalPages - maxThumbnails}`;
+            thumbnailGrid.appendChild(moreIndicator);
+        }
+        
+        docPreview.appendChild(header);
+        docPreview.appendChild(thumbnailGrid);
+        
+        return docPreview;
     }
 
     createSplitPreview(file, thumbnails, ranges) {

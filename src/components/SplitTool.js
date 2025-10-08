@@ -186,9 +186,10 @@ export class SplitTool {
             } else if (splitMethod === 'visual') {
                 // Check if using dividers or checkboxes
                 if (this.splitDividers && this.splitDividers.size > 0) {
-                    // Split by divider positions
+                    // Split by divider positions - convert ranges to page ranges string
                     const ranges = this.getDividerRanges();
-                    results = await this.pdfSplitter.splitPDFByRanges(this.currentFile, ranges);
+                    const rangeString = ranges.map(r => r.start === r.end ? r.start : `${r.start}-${r.end}`).join(', ');
+                    results = await this.pdfSplitter.splitPDF(this.currentFile, rangeString);
                 } else {
                     // Split by visually selected pages (checkboxes)
                     const selectedPages = this.getVisuallySelectedPages();
