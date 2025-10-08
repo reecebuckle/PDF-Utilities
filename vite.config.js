@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: process.env.NODE_ENV === 'production' ? '/PDF-Utilities/' : './',
+  base: process.env.NODE_ENV === 'production' ? '/pdf-utilities/' : './',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
