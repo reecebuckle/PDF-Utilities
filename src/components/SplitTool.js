@@ -184,19 +184,31 @@ export class SplitTool {
                 // Split into individual pages
                 results = await this.pdfSplitter.splitIntoIndividualPages(this.currentFile);
             } else if (splitMethod === 'visual') {
-                // Check if using dividers or checkboxes
+                // Get selected pages from checkboxes
+                const selectedPages = this.getVisuallySelectedPages();
+                if (selectedPages.length === 0) {
+                    throw new Error('Please select at least one page to split');
+                }
+                
+                // Check if using dividers
                 if (this.splitDividers && this.splitDividers.size > 0) {
-                    // Split by divider positions - convert ranges to page ranges string
-                    const ranges = this.getDividerRanges();
-                    const rangeString = ranges.map(r => r.start === r.end ? r.start : `${r.start}-${r.end}`).join(', ');
+                    // Apply dividers to selected pages only
+                    const pageGroups = this.applyDividersToSelectedPages(selectedPages);
+                    
+                    // Convert page groups to range string format for splitPDF
+                    const rangeString = pageGroups.map(group => {
+                        if (group.length === 1) {
+                            return group[0].toString();
+                        } else {
+                            // For multiple pages, we need to check if they're consecutive
+                            const sortedGroup = [...group].sort((a, b) => a - b);
+                            return this.convertPageGroupToRanges(sortedGroup);
+                        }
+                    }).join(', ');
+                    
                     results = await this.pdfSplitter.splitPDF(this.currentFile, rangeString);
                 } else {
-                    // Split by visually selected pages (checkboxes)
-                    const selectedPages = this.getVisuallySelectedPages();
-                    if (selectedPages.length === 0) {
-                        throw new Error('Please select at least one page to split');
-                    }
-                    
+                    // Split by selected pages as individual pages
                     results = await this.pdfSplitter.splitPDFByPageNumbers(this.currentFile, selectedPages);
                 }
             } else {
@@ -702,26 +714,78 @@ export class SplitTool {
         this.updateSplitPreview();
     }
 
+    applyDividersToSelectedPages(selectedPages) {
+        if (!this.splitDividers || this.splitDividers.size === 0) {
+            // No dividers, return each page as individual group
+            return selectedPages.map(page => [page]);
+        }
+        
+        // Sort selected pages and dividers
+        const sortedPages = [...selectedPages].sort((a, b) => a - b);
+        const sortedDividers = Array.from(this.splitDividers).sort((a, b) => a - b);
+        
+        const groups = [];
+        let currentGroup = [];
+        
+        for (const page of sortedPages) {
+            currentGroup.push(page);
+            
+            // Check if there's a divider after this page
+            if (sortedDividers.includes(page)) {
+                // End current group and start new one
+                if (currentGroup.length > 0) {
+                    groups.push([...currentGroup]);
+                    currentGroup = [];
+                }
+            }
+        }
+        
+        // Add remaining pages to final group
+        if (currentGroup.length > 0) {
+            groups.push(currentGroup);
+        }
+        
+        return groups;
+    }
+
+    convertPageGroupToRanges(pageGroup) {
+        if (pageGroup.length === 1) {
+            return pageGroup[0].toString();
+        }
+        
+        // Check if pages are consecutive
+        let ranges = [];
+        let start = pageGroup[0];
+        let end = pageGroup[0];
+        
+        for (let i = 1; i < pageGroup.length; i++) {
+            if (pageGroup[i] === end + 1) {
+                end = pageGroup[i];
+            } else {
+                // Non-consecutive, add current range and start new one
+                ranges.push(start === end ? start.toString() : `${start}-${end}`);
+                start = end = pageGroup[i];
+            }
+        }
+        
+        // Add final range
+        ranges.push(start === end ? start.toString() : `${start}-${end}`);
+        
+        return ranges.join(', ');
+    }
+
     getDividerRanges() {
-        if (!this.splitDividers) {
+        // This method is used for preview only
+        const selectedPages = this.getVisuallySelectedPages();
+        if (selectedPages.length === 0) {
             return [];
         }
         
-        const dividerPositions = Array.from(this.splitDividers).sort((a, b) => a - b);
-        const ranges = [];
-        let start = 1;
-        
-        for (const dividerPos of dividerPositions) {
-            ranges.push({ start: start, end: dividerPos });
-            start = dividerPos + 1;
-        }
-        
-        // Add the final range if there are remaining pages
-        if (start <= this.pageCount) {
-            ranges.push({ start: start, end: this.pageCount });
-        }
-        
-        return ranges;
+        const pageGroups = this.applyDividersToSelectedPages(selectedPages);
+        return pageGroups.map(group => ({
+            start: Math.min(...group),
+            end: Math.max(...group)
+        }));
     }
 
     reset() {

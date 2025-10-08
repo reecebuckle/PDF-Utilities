@@ -156,8 +156,8 @@ export class AppController {
             previewContainer.remove();
         }
         
-        // Create new preview
-        const mergePreview = pdfPreview.createMergePreview(this.state.files, thumbnailsData);
+        // Create new preview using compact style like split preview
+        const mergePreview = this.createCompactMergePreview(this.state.files, thumbnailsData);
         mergePreview.id = 'merge-preview';
         
         // Insert after file list section
@@ -165,6 +165,76 @@ export class AppController {
         if (fileListSection) {
             fileListSection.parentNode.insertBefore(mergePreview, fileListSection.nextSibling);
         }
+    }
+
+    createCompactMergePreview(files, thumbnailsData) {
+        const previewContainer = document.createElement('div');
+        previewContainer.className = 'split-preview-container'; // Use same styling as split preview
+        
+        const header = document.createElement('div');
+        header.className = 'split-preview-header';
+        header.innerHTML = `
+            <h3>Merge Preview</h3>
+            <p>Documents will be combined in this order:</p>
+        `;
+        
+        const rangesContainer = document.createElement('div');
+        rangesContainer.className = 'split-ranges-container';
+        
+        files.forEach((file, index) => {
+            const thumbnails = thumbnailsData.get(file);
+            if (thumbnails && thumbnails.thumbnails.length > 0) {
+                const filePreview = document.createElement('div');
+                filePreview.className = 'split-range-preview';
+                
+                const fileHeader = document.createElement('div');
+                fileHeader.className = 'range-header';
+                fileHeader.innerHTML = `
+                    <span class="range-label">Document ${index + 1}</span>
+                    <span class="range-pages">${file.name.length > 20 ? file.name.substring(0, 17) + '...' : file.name}</span>
+                `;
+                
+                const fileThumbnails = document.createElement('div');
+                fileThumbnails.className = 'range-thumbnails';
+                
+                // Show first few thumbnails
+                const maxThumbnails = 4;
+                for (let i = 0; i < Math.min(thumbnails.thumbnails.length, maxThumbnails); i++) {
+                    const thumbnail = thumbnails.thumbnails[i];
+                    const thumbnailItem = document.createElement('div');
+                    thumbnailItem.className = 'thumbnail-item small';
+                    
+                    const img = document.createElement('img');
+                    img.src = thumbnail.dataUrl;
+                    img.alt = `Page ${thumbnail.pageNumber}`;
+                    img.className = 'thumbnail-image';
+                    
+                    const pageLabel = document.createElement('div');
+                    pageLabel.className = 'page-label';
+                    pageLabel.textContent = thumbnail.pageNumber;
+                    
+                    thumbnailItem.appendChild(img);
+                    thumbnailItem.appendChild(pageLabel);
+                    fileThumbnails.appendChild(thumbnailItem);
+                }
+                
+                if (thumbnails.totalPages > maxThumbnails) {
+                    const moreIndicator = document.createElement('div');
+                    moreIndicator.className = 'more-pages-indicator small';
+                    moreIndicator.textContent = `+${thumbnails.totalPages - maxThumbnails} more`;
+                    fileThumbnails.appendChild(moreIndicator);
+                }
+                
+                filePreview.appendChild(fileHeader);
+                filePreview.appendChild(fileThumbnails);
+                rangesContainer.appendChild(filePreview);
+            }
+        });
+        
+        previewContainer.appendChild(header);
+        previewContainer.appendChild(rangesContainer);
+        
+        return previewContainer;
     }
 
     showMergeSuccess(downloadUrl, filename) {
