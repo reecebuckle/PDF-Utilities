@@ -226,9 +226,7 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.file-list-old {
-    margin-bottom: 1.5rem;
-}
+
 
 .file-item {
     display: flex;
@@ -1084,20 +1082,7 @@ lection */
     scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
-.thumbnail-grid.merge-thumbnails {
-    gap: 0.5rem;
-}
 
-.thumbnail-grid.merge-thumbnails .thumbnail-item {
-    width: 80px;
-    height: 100px;
-}
-
-.thumbnail-grid.merge-thumbnails .more-pages-indicator {
-    width: 80px;
-    height: 100px;
-    font-size: 0.7rem;
-}
 
 .thumbnail-grid::-webkit-scrollbar {
     height: 6px;
@@ -1687,43 +1672,9 @@ lection */
     box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
 }
 
-/* Full Document Preview */
-.pdf-preview-container.full-document {
-    max-width: 100%;
-}
 
-.full-document-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
-}
 
-.full-document-scroll::-webkit-scrollbar {
-    width: 6px;
-}
 
-.full-document-scroll::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
-}
-
-.full-document-scroll::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 3px;
-}
-
-.thumbnail-grid.vertical {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
-    gap: 0.5rem !important;
-}
-
-.thumbnail-item.placeholder {
-    opacity: 0.7;
-}
-
-.thumbnail-item.placeholder:hover {
-    opacity: 0.9;
-}
 
 /* Responsive adjustments for tool selection */
 @media (max-width: 768px) {
