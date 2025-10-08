@@ -354,7 +354,7 @@ export class FileListManager {
             }
             
             const thumbnailGrid = document.createElement('div');
-            thumbnailGrid.className = 'thumbnail-grid';
+            thumbnailGrid.className = 'thumbnail-grid merge-thumbnails';
             
             thumbnails.thumbnails.forEach(thumbnail => {
                 const thumbnailItem = document.createElement('div');

@@ -1005,6 +1005,21 @@ lection */
     scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
+.thumbnail-grid.merge-thumbnails {
+    gap: 0.5rem;
+}
+
+.thumbnail-grid.merge-thumbnails .thumbnail-item {
+    width: 80px;
+    height: 100px;
+}
+
+.thumbnail-grid.merge-thumbnails .more-pages-indicator {
+    width: 80px;
+    height: 100px;
+    font-size: 0.7rem;
+}
+
 .thumbnail-grid::-webkit-scrollbar {
     height: 6px;
 }
@@ -1219,7 +1234,7 @@ lection */
 }
 
 /* Page Selection Styles */
-.visual-page-selection {
+.visual-page-selection, .visual-divider-selection {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
     padding: 1.5rem;
@@ -1288,6 +1303,86 @@ lection */
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 1rem;
     padding: 0.5rem;
+}
+
+.page-thumbnails-row {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.5rem;
+    align-items: center;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.page-thumbnails-row::-webkit-scrollbar {
+    height: 6px;
+}
+
+.page-thumbnails-row::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.page-thumbnails-row::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+/* Divider Styles */
+.split-divider-placeholder {
+    width: 20px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.split-divider-placeholder:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.split-divider-placeholder::after {
+    content: '✂';
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 16px;
+}
+
+.split-divider {
+    width: 20px;
+    height: 120px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 2px solid #667eea;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.split-divider:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.split-divider::after {
+    content: '✂';
+    color: white;
+    font-size: 16px;
+}
+
+.page-thumbnail.in-split-mode {
+    flex-shrink: 0;
 }
 
 .page-thumbnail {
