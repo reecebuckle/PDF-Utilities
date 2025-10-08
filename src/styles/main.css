@@ -195,20 +195,35 @@ body {
     flex: 1;
 }
 
+.file-details {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
 .remove-btn {
     background: rgba(239, 68, 68, 0.8);
     color: white;
     border: none;
     border-radius: 6px;
-    padding: 0.4rem 0.6rem;
-    font-size: 0.75rem;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.7rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
 .remove-btn:hover {
     background: rgba(239, 68, 68, 1);
     transform: translateY(-1px);
+}
+
+/* Add spacing before merge actions */
+.merge-actions {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .file-list-old {

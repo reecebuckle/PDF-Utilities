@@ -306,11 +306,13 @@ export class FileListManager {
             </div>
             <div class="file-info">
                 <span class="range-label">${this.truncateFileName(fileItem.name)}</span>
-                <span class="range-pages">${this.formatFileSize(fileItem.size)}${pageCount > 0 ? ` • ${pageCount} pages` : ''}</span>
+                <div class="file-details">
+                    <span class="range-pages">${this.formatFileSize(fileItem.size)}${pageCount > 0 ? ` • ${pageCount} pages` : ''}</span>
+                    <button type="button" class="remove-btn" title="Remove file" data-file-id="${fileItem.id}">
+                        Remove
+                    </button>
+                </div>
             </div>
-            <button type="button" class="remove-btn" title="Remove file" data-file-id="${fileItem.id}">
-                Remove
-            </button>
         `;
 
         div.appendChild(fileHeader);
