@@ -12,6 +12,7 @@ export class SplitTool {
         this.currentFile = null;
         this.pageCount = 0;
         this.currentThumbnails = null;
+        this.splitDividers = new Set();
         
         this.pdfSplitter = new PDFSplitter((progress) => {
             this.handleProgress(progress);
@@ -76,16 +77,16 @@ export class SplitTool {
             });
         }
 
-        // Visual selection controls
-        const selectAllBtn = document.getElementById('select-all-pages');
-        const selectNoneBtn = document.getElementById('select-none-pages');
+        // Visual divider controls
+        const clearDividersBtn = document.getElementById('clear-dividers');
+        const addAllDividersBtn = document.getElementById('add-all-dividers');
         
-        if (selectAllBtn) {
-            selectAllBtn.addEventListener('click', () => this.selectAllPages());
+        if (clearDividersBtn) {
+            clearDividersBtn.addEventListener('click', () => this.clearAllDividers());
         }
         
-        if (selectNoneBtn) {
-            selectNoneBtn.addEventListener('click', () => this.selectNoPages());
+        if (addAllDividersBtn) {
+            addAllDividersBtn.addEventListener('click', () => this.addAllDividers());
         }
 
         // Split button
@@ -178,15 +179,18 @@ export class SplitTool {
                 // Split into individual pages
                 results = await this.pdfSplitter.splitIntoIndividualPages(this.currentFile);
             } else if (splitMethod === 'visual') {
-                // Split by visually selected pages
-                const selectedPages = this.getVisuallySelectedPages();
-                if (selectedPages.length === 0) {
-                    throw new Error('Please select at least one page to split');
+                // Split by divider positions
+                if (!this.splitDividers || this.splitDividers.size === 0) {
+                    throw new Error('Please add at least one split divider');
                 }
                 
-                // Convert selected pages to ranges for splitting
-                const ranges = this.convertPagesToRanges(selectedPages);
-                results = await this.pdfSplitter.splitPDFByPageNumbers(this.currentFile, selectedPages);
+                const ranges = this.getDividerRanges();
+                const rangeStrings = ranges.map(range => 
+                    range.start === range.end ? range.start.toString() : `${range.start}-${range.end}`
+                );
+                const rangeText = rangeStrings.join(', ');
+                
+                results = await this.pdfSplitter.splitPDF(this.currentFile, rangeText);
             } else {
                 // Split by ranges
                 const pageRanges = document.getElementById('page-ranges').value;
@@ -327,10 +331,9 @@ export class SplitTool {
                 }
             }
         } else if (splitMethod === 'visual') {
-            // Show preview for visually selected pages
-            const selectedPages = this.getVisuallySelectedPages();
-            if (selectedPages.length > 0) {
-                const ranges = this.convertPagesToRanges(selectedPages);
+            // Show preview for divider-based splits
+            if (this.splitDividers && this.splitDividers.size > 0) {
+                const ranges = this.getDividerRanges();
                 this.showSplitPreview(ranges);
             }
         }
@@ -355,6 +358,7 @@ export class SplitTool {
         this.currentFile = null;
         this.pageCount = 0;
         this.currentThumbnails = null;
+        this.splitDividers = new Set();
         
         // Remove preview
         const splitPreview = document.getElementById('split-preview');
@@ -417,88 +421,142 @@ export class SplitTool {
             }
 
             container.innerHTML = '';
+            this.splitDividers = new Set(); // Track where dividers are placed
 
-            // Create thumbnails for all pages
-            for (let pageNum = 1; pageNum <= this.pageCount; pageNum++) {
-                const thumbnail = this.currentThumbnails.thumbnails.find(t => t.pageNumber === pageNum) ||
-                                this.pdfPreview.createEnhancedPlaceholder(pageNum, this.currentFile.name);
-                
-                const thumbnailElement = this.createPageThumbnailElement(thumbnail, pageNum);
-                container.appendChild(thumbnailElement);
-            }
+            // Create the visual split interface
+            this.createVisualSplitInterface(container);
         } catch (error) {
             console.error('Error generating thumbnails:', error);
             container.innerHTML = '<div class="error-message">Failed to generate thumbnails</div>';
         }
     }
 
-    createPageThumbnailElement(thumbnail, pageNum) {
+    createVisualSplitInterface(container) {
+        // Create thumbnails with divider placeholders between them
+        for (let pageNum = 1; pageNum <= this.pageCount; pageNum++) {
+            const thumbnail = this.currentThumbnails.thumbnails.find(t => t.pageNumber === pageNum) ||
+                            this.pdfPreview.createEnhancedPlaceholder(pageNum, this.currentFile.name);
+            
+            // Create thumbnail element
+            const thumbnailElement = this.createSplitThumbnailElement(thumbnail, pageNum);
+            container.appendChild(thumbnailElement);
+
+            // Add divider placeholder after each page (except the last one)
+            if (pageNum < this.pageCount) {
+                const dividerPlaceholder = this.createDividerPlaceholder(pageNum);
+                container.appendChild(dividerPlaceholder);
+            }
+        }
+    }
+
+    createSplitThumbnailElement(thumbnail, pageNum) {
         const element = document.createElement('div');
-        element.className = 'page-thumbnail selected';
+        element.className = 'page-thumbnail in-split-mode';
         element.dataset.pageNumber = pageNum;
 
         element.innerHTML = `
             <img src="${thumbnail.dataUrl}" alt="Page ${pageNum}" class="page-thumbnail-image">
             <div class="page-thumbnail-label">${pageNum}</div>
-            <input type="checkbox" class="page-thumbnail-checkbox" checked data-page="${pageNum}">
         `;
-
-        // Add click handler
-        element.addEventListener('click', (e) => {
-            if (e.target.type !== 'checkbox') {
-                const checkbox = element.querySelector('.page-thumbnail-checkbox');
-                checkbox.checked = !checkbox.checked;
-            }
-            this.updateThumbnailSelection(element);
-            this.updateSplitPreview();
-        });
-
-        // Add checkbox handler
-        const checkbox = element.querySelector('.page-thumbnail-checkbox');
-        checkbox.addEventListener('change', () => {
-            this.updateThumbnailSelection(element);
-            this.updateSplitPreview();
-        });
 
         return element;
     }
 
-    updateThumbnailSelection(element) {
-        const checkbox = element.querySelector('.page-thumbnail-checkbox');
-        if (checkbox.checked) {
-            element.classList.add('selected');
-            element.classList.remove('unselected');
-        } else {
-            element.classList.remove('selected');
-            element.classList.add('unselected');
-        }
+    createDividerPlaceholder(afterPage) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'split-divider-placeholder';
+        placeholder.dataset.afterPage = afterPage;
+        placeholder.title = `Click to split after page ${afterPage}`;
+
+        placeholder.addEventListener('click', () => {
+            this.toggleDivider(afterPage, placeholder);
+        });
+
+        return placeholder;
     }
 
-    selectAllPages() {
-        const checkboxes = document.querySelectorAll('#split-page-thumbnails .page-thumbnail-checkbox');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = true;
-            this.updateThumbnailSelection(checkbox.closest('.page-thumbnail'));
-        });
+    toggleDivider(afterPage, placeholderElement) {
+        if (this.splitDividers.has(afterPage)) {
+            // Remove divider
+            this.splitDividers.delete(afterPage);
+            placeholderElement.className = 'split-divider-placeholder';
+            placeholderElement.title = `Click to split after page ${afterPage}`;
+        } else {
+            // Add divider
+            this.splitDividers.add(afterPage);
+            placeholderElement.className = 'split-divider';
+            placeholderElement.title = `Click to remove split after page ${afterPage}`;
+        }
+        
         this.updateSplitPreview();
     }
 
-    selectNoPages() {
-        const checkboxes = document.querySelectorAll('#split-page-thumbnails .page-thumbnail-checkbox');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = false;
-            this.updateThumbnailSelection(checkbox.closest('.page-thumbnail'));
+
+
+    clearAllDividers() {
+        this.splitDividers.clear();
+        
+        // Update all divider elements
+        const dividerElements = document.querySelectorAll('.split-divider, .split-divider-placeholder');
+        dividerElements.forEach(element => {
+            const afterPage = parseInt(element.dataset.afterPage);
+            element.className = 'split-divider-placeholder';
+            element.title = `Click to split after page ${afterPage}`;
         });
+        
+        this.updateSplitPreview();
+    }
+
+    addAllDividers() {
+        // Add dividers after every page except the last
+        for (let pageNum = 1; pageNum < this.pageCount; pageNum++) {
+            this.splitDividers.add(pageNum);
+        }
+        
+        // Update all divider elements
+        const dividerElements = document.querySelectorAll('.split-divider, .split-divider-placeholder');
+        dividerElements.forEach(element => {
+            const afterPage = parseInt(element.dataset.afterPage);
+            if (this.splitDividers.has(afterPage)) {
+                element.className = 'split-divider';
+                element.title = `Click to remove split after page ${afterPage}`;
+            }
+        });
+        
         this.updateSplitPreview();
     }
 
     getVisuallySelectedPages() {
-        const checkboxes = document.querySelectorAll('#split-page-thumbnails .page-thumbnail-checkbox:checked');
-        const pages = [];
-        checkboxes.forEach(checkbox => {
-            pages.push(parseInt(checkbox.dataset.page));
+        // Convert dividers to page ranges
+        const ranges = this.getDividerRanges();
+        const allPages = [];
+        
+        ranges.forEach(range => {
+            for (let i = range.start; i <= range.end; i++) {
+                allPages.push(i);
+            }
         });
-        return pages.sort((a, b) => a - b);
+        
+        return allPages.sort((a, b) => a - b);
+    }
+
+    getDividerRanges() {
+        const dividerPositions = Array.from(this.splitDividers).sort((a, b) => a - b);
+        const ranges = [];
+        
+        let start = 1;
+        
+        for (const dividerAfterPage of dividerPositions) {
+            ranges.push({ start: start, end: dividerAfterPage });
+            start = dividerAfterPage + 1;
+        }
+        
+        // Add the final range if there are remaining pages
+        if (start <= this.pageCount) {
+            ranges.push({ start: start, end: this.pageCount });
+        }
+        
+        return ranges;
     }
 
     convertPagesToRanges(pages) {

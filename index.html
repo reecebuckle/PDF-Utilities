@@ -178,7 +178,7 @@
                         
                         <div class="split-method">
                             <input type="radio" id="split-visual" name="split-method" value="visual">
-                            <label for="split-visual">Select pages visually</label>
+                            <label for="split-visual">Split visually with dividers</label>
                         </div>
                         
                         <div class="split-method">
@@ -187,17 +187,17 @@
                         </div>
                     </div>
 
-                    <!-- Visual Page Selection -->
+                    <!-- Visual Split Selection -->
                     <div class="visual-page-selection" id="visual-page-selection" style="display: none;">
                         <div class="page-selection-header">
-                            <span class="selection-info">Click pages to select/deselect for splitting</span>
+                            <span class="selection-info">Click between pages to add split dividers</span>
                             <div class="selection-controls">
-                                <button type="button" class="btn-small" id="select-all-pages">Select All</button>
-                                <button type="button" class="btn-small" id="select-none-pages">Select None</button>
+                                <button type="button" class="btn-small" id="clear-dividers">Clear All Dividers</button>
+                                <button type="button" class="btn-small" id="add-all-dividers">Split Every Page</button>
                             </div>
                         </div>
                         <div class="page-thumbnails-container">
-                            <div id="split-page-thumbnails" class="page-thumbnails-grid"></div>
+                            <div id="split-page-thumbnails" class="page-thumbnails-row"></div>
                         </div>
                     </div>
                     
