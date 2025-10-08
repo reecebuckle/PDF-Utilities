@@ -282,7 +282,7 @@ export class FileListManager {
 
     createFileElement(fileItem, index) {
         const div = document.createElement('div');
-        div.className = 'file-item';
+        div.className = 'split-range-preview'; // Use same clean styling as merge preview
         div.draggable = true;
         div.dataset.fileId = fileItem.id;
         div.dataset.index = index;
@@ -290,56 +290,42 @@ export class FileListManager {
         const thumbnails = this.thumbnailsData.get(fileItem.file);
         const pageCount = thumbnails ? thumbnails.totalPages : 0;
 
-        div.innerHTML = `
-            <div class="drag-handle" title="Drag to reorder">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="3" y1="18" x2="21" y2="18"></line>
-                </svg>
+        // Create header like merge preview
+        const fileHeader = document.createElement('div');
+        fileHeader.className = 'range-header';
+        fileHeader.innerHTML = `
+            <div class="file-controls">
+                <div class="drag-handle" title="Drag to reorder">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </div>
+                <div class="file-order">${index + 1}</div>
             </div>
-            <div class="file-order">${index + 1}</div>
             <div class="file-info">
-                <div class="file-name" title="${fileItem.name}">${this.truncateFileName(fileItem.name)}</div>
-                <div class="file-size">${this.formatFileSize(fileItem.size)}${pageCount > 0 ? ` • ${pageCount} pages` : ''}</div>
+                <span class="range-label">${this.truncateFileName(fileItem.name)}</span>
+                <span class="range-pages">${this.formatFileSize(fileItem.size)}${pageCount > 0 ? ` • ${pageCount} pages` : ''}</span>
             </div>
             <button type="button" class="remove-btn" title="Remove file" data-file-id="${fileItem.id}">
                 Remove
             </button>
         `;
 
-        // Add preview if available
+        div.appendChild(fileHeader);
+
+        // Add thumbnails if available
         if (this.showPreviews && thumbnails && thumbnails.thumbnails.length > 0) {
-            const previewDiv = document.createElement('div');
-            previewDiv.className = 'file-item-preview';
+            const fileThumbnails = document.createElement('div');
+            fileThumbnails.className = 'range-thumbnails'; // Use same class as merge preview
             
-            // Add page selection controls (only if advanced mode is enabled)
-            let pageSelectionDiv = null;
-            if (this.showAdvancedSelection) {
-                pageSelectionDiv = document.createElement('div');
-                pageSelectionDiv.className = 'page-selection-controls';
-                pageSelectionDiv.innerHTML = `
-                    <div class="page-selection-header">
-                        <label class="page-selection-label">
-                            <input type="radio" name="pages-${fileItem.id}" value="all" checked>
-                            All pages (1-${thumbnails.totalPages})
-                        </label>
-                        <label class="page-selection-label">
-                            <input type="radio" name="pages-${fileItem.id}" value="range">
-                            Page range:
-                        </label>
-                        <input type="text" class="page-range-input" placeholder="e.g., 1-5, 8, 10-12" 
-                               data-file-id="${fileItem.id}" disabled>
-                    </div>
-                `;
-            }
-            
-            const thumbnailGrid = document.createElement('div');
-            thumbnailGrid.className = 'thumbnail-grid merge-thumbnails';
-            
-            thumbnails.thumbnails.forEach(thumbnail => {
+            // Show first few thumbnails like in merge preview
+            const maxThumbnails = 4;
+            for (let i = 0; i < Math.min(thumbnails.thumbnails.length, maxThumbnails); i++) {
+                const thumbnail = thumbnails.thumbnails[i];
                 const thumbnailItem = document.createElement('div');
-                thumbnailItem.className = this.showAdvancedSelection ? 'thumbnail-item selectable' : 'thumbnail-item';
+                thumbnailItem.className = 'thumbnail-item small';
                 thumbnailItem.dataset.pageNumber = thumbnail.pageNumber;
                 thumbnailItem.dataset.fileId = fileItem.id;
                 
@@ -352,7 +338,7 @@ export class FileListManager {
                 pageLabel.className = 'page-label';
                 pageLabel.textContent = thumbnail.pageNumber;
                 
-                // Add selection checkbox only in advanced mode
+                // Add selection checkbox for advanced mode
                 if (this.showAdvancedSelection) {
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
@@ -361,36 +347,29 @@ export class FileListManager {
                     checkbox.dataset.pageNumber = thumbnail.pageNumber;
                     checkbox.dataset.fileId = fileItem.id;
                     thumbnailItem.appendChild(checkbox);
+                    
+                    // Make thumbnail clickable
+                    thumbnailItem.classList.add('selectable');
+                    thumbnailItem.addEventListener('click', (e) => {
+                        if (e.target.type !== 'checkbox') {
+                            checkbox.checked = !checkbox.checked;
+                        }
+                    });
                 }
                 
                 thumbnailItem.appendChild(img);
                 thumbnailItem.appendChild(pageLabel);
-                thumbnailGrid.appendChild(thumbnailItem);
-            });
+                fileThumbnails.appendChild(thumbnailItem);
+            }
             
-            if (thumbnails.hasMore) {
+            if (thumbnails.totalPages > maxThumbnails) {
                 const moreIndicator = document.createElement('div');
-                moreIndicator.className = 'more-pages-indicator';
-                moreIndicator.textContent = `+${thumbnails.totalPages - thumbnails.thumbnails.length} more`;
-                moreIndicator.title = `Total pages: ${thumbnails.totalPages}`;
-                thumbnailGrid.appendChild(moreIndicator);
+                moreIndicator.className = 'more-pages-indicator small';
+                moreIndicator.textContent = `+${thumbnails.totalPages - maxThumbnails} more`;
+                fileThumbnails.appendChild(moreIndicator);
             }
             
-            // Add scroll hint if there are many thumbnails
-            if (thumbnails.thumbnails.length > 3) {
-                thumbnailGrid.title = 'Scroll horizontally to see more pages';
-            }
-            
-            if (pageSelectionDiv) {
-                previewDiv.appendChild(pageSelectionDiv);
-            }
-            previewDiv.appendChild(thumbnailGrid);
-            div.appendChild(previewDiv);
-            
-            // Set up page selection event listeners (only in advanced mode)
-            if (this.showAdvancedSelection) {
-                this.setupPageSelectionListeners(previewDiv, fileItem.id, thumbnails.totalPages);
-            }
+            div.appendChild(fileThumbnails);
         }
 
         this.setupDragAndDrop(div);
