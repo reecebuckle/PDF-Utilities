@@ -64,67 +64,105 @@ export class PDFPreview {
 
     async loadPDFWithPDFJS(uint8Array) {
         try {
+            console.log('Attempting to load PDF.js...');
+            
             // Dynamically import PDF.js
             const pdfjsLib = await import('pdfjs-dist');
+            console.log('PDF.js loaded successfully');
             
-            // Set worker source
-            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js`;
+            // Set worker source - try multiple options
+            if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                try {
+                    // Try to use the bundled worker first
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.js', import.meta.url).href;
+                } catch (e) {
+                    // Fallback to CDN
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js`;
+                }
+            }
             
             // Load PDF with PDF.js
-            const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
+            console.log('Loading PDF document...');
+            const loadingTask = pdfjsLib.getDocument({ 
+                data: uint8Array,
+                verbosity: 0 // Reduce PDF.js console output
+            });
+            
             const pdf = await loadingTask.promise;
+            console.log(`PDF loaded successfully with ${pdf.numPages} pages`);
             
             return pdf;
             
         } catch (error) {
-            console.warn('PDF.js not available, falling back to page count only:', error);
+            console.warn('PDF.js failed, using fallback:', error);
             
-            // Fallback: Use PDF-lib to get page count
-            const pdf = await loadPDFFromBytes(uint8Array);
-            const pageCount = pdf.getPageCount();
-            
-            return {
-                numPages: pageCount,
-                getPage: async (pageNum) => {
-                    return {
-                        pageNumber: pageNum,
-                        getViewport: (options = {}) => ({ 
-                            width: options.scale ? 200 * options.scale : 200, 
-                            height: options.scale ? 280 * options.scale : 280 
-                        }),
-                        render: () => Promise.resolve() // Mock render
-                    };
-                }
-            };
+            // Enhanced fallback: Use PDF-lib to get page count and create better mock
+            try {
+                const pdf = await loadPDFFromBytes(uint8Array);
+                const pageCount = pdf.getPageCount();
+                console.log(`Fallback: PDF has ${pageCount} pages`);
+                
+                return {
+                    numPages: pageCount,
+                    getPage: async (pageNum) => {
+                        return {
+                            pageNumber: pageNum,
+                            getViewport: (options = {}) => ({ 
+                                width: options.scale ? 200 * options.scale : 200, 
+                                height: options.scale ? 280 * options.scale : 280 
+                            }),
+                            render: () => {
+                                console.log(`Mock rendering page ${pageNum}`);
+                                return { promise: Promise.resolve() };
+                            }
+                        };
+                    }
+                };
+            } catch (fallbackError) {
+                console.error('Both PDF.js and PDF-lib failed:', fallbackError);
+                throw new Error('Unable to load PDF with any available library');
+            }
         }
     }
 
     async renderPageThumbnail(page, pageNum) {
         try {
-            // Try to render actual PDF content
-            const scale = 0.5; // Scale down for thumbnail
-            const viewport = page.getViewport({ scale });
+            console.log(`Rendering thumbnail for page ${pageNum}`);
             
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            
-            // Render the page
-            const renderContext = {
-                canvasContext: context,
-                viewport: viewport
-            };
-            
-            await page.render(renderContext).promise;
-            
-            return {
-                pageNumber: pageNum,
-                canvas: canvas,
-                dataUrl: canvas.toDataURL('image/png'),
-                width: canvas.width,
-                height: canvas.height
-            };
+            // Check if this is a real PDF.js page or our fallback
+            if (page.render && typeof page.render === 'function') {
+                // Real PDF.js page
+                const scale = 0.5; // Scale down for thumbnail
+                const viewport = page.getViewport({ scale });
+                
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                // Render the page
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                
+                const renderTask = page.render(renderContext);
+                await renderTask.promise;
+                
+                console.log(`Successfully rendered page ${pageNum}`);
+                
+                return {
+                    pageNumber: pageNum,
+                    canvas: canvas,
+                    dataUrl: canvas.toDataURL('image/png'),
+                    width: canvas.width,
+                    height: canvas.height
+                };
+            } else {
+                // Fallback page - create enhanced placeholder
+                console.log(`Using enhanced placeholder for page ${pageNum}`);
+                return this.createEnhancedPlaceholder(pageNum);
+            }
             
         } catch (error) {
             console.warn(`Failed to render page ${pageNum}, using placeholder:`, error);
@@ -135,6 +173,10 @@ export class PDFPreview {
     }
 
     createPlaceholderThumbnail(pageNum) {
+        return this.createEnhancedPlaceholder(pageNum, '#ef4444', 'Error');
+    }
+
+    createEnhancedPlaceholder(pageNum, iconColor = '#3b82f6', iconText = 'PDF') {
         const thumbnailWidth = 120;
         const thumbnailHeight = 160;
         
@@ -143,25 +185,42 @@ export class PDFPreview {
         canvas.height = thumbnailHeight;
         const ctx = canvas.getContext('2d');
         
-        // Draw placeholder background
-        ctx.fillStyle = '#f8fafc';
+        // Draw white background (like a real PDF page)
+        ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, thumbnailWidth, thumbnailHeight);
         
-        // Draw border
+        // Draw subtle shadow/border
         ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(0, 0, thumbnailWidth, thumbnailHeight);
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, thumbnailWidth - 2, thumbnailHeight - 2);
         
-        // Draw PDF icon
-        ctx.fillStyle = '#ef4444';
-        ctx.font = 'bold 16px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('PDF', thumbnailWidth / 2, thumbnailHeight / 2 - 10);
+        // Draw document lines (simulate text)
+        ctx.strokeStyle = '#f1f5f9';
+        ctx.lineWidth = 1;
+        const lineSpacing = 12;
+        const startY = 25;
+        const endX = thumbnailWidth - 20;
+        
+        for (let i = 0; i < 8; i++) {
+            const y = startY + (i * lineSpacing);
+            const lineWidth = Math.random() * 40 + 40; // Random line lengths
+            ctx.beginPath();
+            ctx.moveTo(15, y);
+            ctx.lineTo(Math.min(15 + lineWidth, endX), y);
+            ctx.stroke();
+        }
+        
+        // Draw PDF icon in corner
+        ctx.fillStyle = iconColor;
+        ctx.font = 'bold 10px Inter, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(iconText, 8, thumbnailHeight - 8);
         
         // Draw page number
         ctx.fillStyle = '#64748b';
-        ctx.font = '14px Inter, sans-serif';
-        ctx.fillText(`Page ${pageNum}`, thumbnailWidth / 2, thumbnailHeight / 2 + 15);
+        ctx.font = '10px Inter, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${pageNum}`, thumbnailWidth - 8, thumbnailHeight - 8);
         
         return {
             pageNumber: pageNum,

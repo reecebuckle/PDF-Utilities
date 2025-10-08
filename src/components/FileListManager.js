@@ -31,10 +31,14 @@ export class FileListManager {
             // Generate thumbnails for preview
             if (this.showPreviews) {
                 try {
+                    console.log(`Generating thumbnails for ${file.name}...`);
                     const thumbnails = await this.pdfPreview.generateThumbnails(file, 5);
+                    console.log(`Generated ${thumbnails.thumbnails.length} thumbnails for ${file.name}`);
                     this.thumbnailsData.set(file, thumbnails);
                 } catch (error) {
                     console.warn('Failed to generate thumbnails for', file.name, error);
+                    // Set empty thumbnails data so we don't keep trying
+                    this.thumbnailsData.set(file, { thumbnails: [], totalPages: 0, hasMore: false });
                 }
             }
         }
