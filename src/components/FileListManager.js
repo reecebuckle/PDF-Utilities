@@ -35,7 +35,9 @@ export class FileListManager {
             if (this.showPreviews) {
                 try {
                     console.log(`Generating thumbnails for ${file.name}...`);
-                    const thumbnails = await this.pdfPreview.generateThumbnails(file, 5);
+                    // Generate more thumbnails for better horizontal scrolling experience
+                    const thumbnailCount = Math.min(15, Math.max(5, Math.ceil(file.size / (1024 * 1024)))); // 5-15 based on file size
+                    const thumbnails = await this.pdfPreview.generateThumbnails(file, thumbnailCount);
                     console.log(`Generated ${thumbnails.thumbnails.length} thumbnails for ${file.name}`);
                     this.thumbnailsData.set(file, thumbnails);
                 } catch (error) {
@@ -388,8 +390,14 @@ export class FileListManager {
             if (thumbnails.hasMore) {
                 const moreIndicator = document.createElement('div');
                 moreIndicator.className = 'more-pages-indicator';
-                moreIndicator.textContent = `+${thumbnails.totalPages - thumbnails.thumbnails.length}`;
+                moreIndicator.textContent = `+${thumbnails.totalPages - thumbnails.thumbnails.length} more`;
+                moreIndicator.title = `Total pages: ${thumbnails.totalPages}`;
                 thumbnailGrid.appendChild(moreIndicator);
+            }
+            
+            // Add scroll hint if there are many thumbnails
+            if (thumbnails.thumbnails.length > 3) {
+                thumbnailGrid.title = 'Scroll horizontally to see more pages';
             }
             
             if (pageSelectionDiv) {

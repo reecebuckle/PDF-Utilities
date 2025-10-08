@@ -285,6 +285,97 @@ export class PDFPreview {
         });
     }
 
+    createFullDocumentPreview(file, thumbnails) {
+        const previewContainer = document.createElement('div');
+        previewContainer.className = 'pdf-preview-container full-document';
+
+        const header = document.createElement('div');
+        header.className = 'preview-header';
+        header.innerHTML = `
+            <h4>📄 ${file.name}</h4>
+            <span class="page-count">${thumbnails.totalPages} pages</span>
+        `;
+
+        const scrollContainer = document.createElement('div');
+        scrollContainer.className = 'full-document-scroll';
+        scrollContainer.style.cssText = `
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-top: 1rem;
+        `;
+
+        const thumbnailGrid = document.createElement('div');
+        thumbnailGrid.className = 'thumbnail-grid vertical';
+        thumbnailGrid.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 0.5rem;
+            max-width: 100%;
+        `;
+
+        // Show all available thumbnails
+        thumbnails.thumbnails.forEach(thumbnail => {
+            const thumbnailItem = document.createElement('div');
+            thumbnailItem.className = 'thumbnail-item small';
+            thumbnailItem.dataset.pageNumber = thumbnail.pageNumber;
+
+            const img = document.createElement('img');
+            img.src = thumbnail.dataUrl;
+            img.alt = `Page ${thumbnail.pageNumber}`;
+            img.className = 'thumbnail-image';
+
+            const pageLabel = document.createElement('div');
+            pageLabel.className = 'page-label';
+            pageLabel.textContent = thumbnail.pageNumber;
+
+            thumbnailItem.appendChild(img);
+            thumbnailItem.appendChild(pageLabel);
+            thumbnailGrid.appendChild(thumbnailItem);
+        });
+
+        // Add placeholders for remaining pages if any
+        if (thumbnails.hasMore) {
+            const remainingPages = thumbnails.totalPages - thumbnails.thumbnails.length;
+            for (let i = 1; i <= Math.min(remainingPages, 10); i++) {
+                const pageNum = thumbnails.thumbnails.length + i;
+                const placeholder = this.createEnhancedPlaceholder(pageNum, file.name);
+                
+                const thumbnailItem = document.createElement('div');
+                thumbnailItem.className = 'thumbnail-item small placeholder';
+                thumbnailItem.dataset.pageNumber = pageNum;
+
+                const img = document.createElement('img');
+                img.src = placeholder.dataUrl;
+                img.alt = `Page ${pageNum}`;
+                img.className = 'thumbnail-image';
+
+                const pageLabel = document.createElement('div');
+                pageLabel.className = 'page-label';
+                pageLabel.textContent = pageNum;
+
+                thumbnailItem.appendChild(img);
+                thumbnailItem.appendChild(pageLabel);
+                thumbnailGrid.appendChild(thumbnailItem);
+            }
+
+            if (remainingPages > 10) {
+                const moreIndicator = document.createElement('div');
+                moreIndicator.className = 'more-pages-indicator small';
+                moreIndicator.textContent = `+${remainingPages - 10} more`;
+                thumbnailGrid.appendChild(moreIndicator);
+            }
+        }
+
+        scrollContainer.appendChild(thumbnailGrid);
+        previewContainer.appendChild(header);
+        previewContainer.appendChild(scrollContainer);
+
+        return previewContainer;
+    }
+
     clearCache() {
         this.thumbnailCache.clear();
     }

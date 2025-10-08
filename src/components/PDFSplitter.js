@@ -244,4 +244,60 @@ export class PDFSplitter {
             throw new Error(`Failed to read PDF: ${error.message}`);
         }
     }
+
+    async splitPDFByPageNumbers(file, selectedPages) {
+        if (this.isProcessing) {
+            throw new Error('PDF splitting is already in progress');
+        }
+
+        this.isProcessing = true;
+        
+        try {
+            this.updateProgress(0, 'Loading PDF...');
+            
+            // Load the source PDF
+            const arrayBuffer = await this.fileToArrayBuffer(file);
+            const uint8Array = new Uint8Array(arrayBuffer);
+            const sourcePdf = await loadPDFFromBytes(uint8Array);
+            
+            this.updateProgress(10, 'Creating individual page PDFs...');
+            
+            const results = [];
+            
+            for (let i = 0; i < selectedPages.length; i++) {
+                const pageNum = selectedPages[i];
+                const progress = 10 + ((i + 1) / selectedPages.length) * 80;
+                
+                this.updateProgress(progress, `Creating PDF for page ${pageNum}...`);
+                
+                // Create new PDF for this page
+                const newPdf = await createPDFDocument();
+                
+                // Copy single page (convert to 0-based indexing)
+                const [copiedPage] = await newPdf.copyPages(sourcePdf, [pageNum - 1]);
+                newPdf.addPage(copiedPage);
+                
+                // Generate the PDF bytes
+                const pdfBytes = await newPdf.save();
+                
+                // Create result object
+                const filename = this.generatePageFilename(file.name, pageNum);
+                results.push({
+                    filename: filename,
+                    data: pdfBytes,
+                    pages: `${pageNum}`,
+                    size: pdfBytes.length
+                });
+            }
+            
+            this.updateProgress(100, 'Split completed!');
+            
+            return results;
+            
+        } catch (error) {
+            throw new Error(`PDF split failed: ${error.message}`);
+        } finally {
+            this.isProcessing = false;
+        }
+    }
 }

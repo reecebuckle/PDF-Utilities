@@ -40,18 +40,31 @@ export class SplitTool {
     setupEventListeners() {
         // Split method radio buttons
         const splitRanges = document.getElementById('split-ranges');
+        const splitVisual = document.getElementById('split-visual');
         const splitAll = document.getElementById('split-all');
         const rangesInput = document.getElementById('split-ranges-input');
+        const visualSelection = document.getElementById('visual-page-selection');
         const pageRangesInput = document.getElementById('page-ranges');
 
-        if (splitRanges && splitAll && rangesInput) {
+        if (splitRanges && splitVisual && splitAll && rangesInput && visualSelection) {
             splitRanges.addEventListener('change', () => {
                 rangesInput.style.display = splitRanges.checked ? 'block' : 'none';
+                visualSelection.style.display = 'none';
+                this.updateSplitPreview();
+            });
+
+            splitVisual.addEventListener('change', async () => {
+                rangesInput.style.display = 'none';
+                visualSelection.style.display = splitVisual.checked ? 'block' : 'none';
+                if (splitVisual.checked) {
+                    await this.showVisualPageSelection();
+                }
                 this.updateSplitPreview();
             });
 
             splitAll.addEventListener('change', () => {
-                rangesInput.style.display = splitAll.checked ? 'none' : 'block';
+                rangesInput.style.display = 'none';
+                visualSelection.style.display = 'none';
                 this.updateSplitPreview();
             });
         }
@@ -61,6 +74,18 @@ export class SplitTool {
             pageRangesInput.addEventListener('input', () => {
                 this.updateSplitPreview();
             });
+        }
+
+        // Visual selection controls
+        const selectAllBtn = document.getElementById('select-all-pages');
+        const selectNoneBtn = document.getElementById('select-none-pages');
+        
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', () => this.selectAllPages());
+        }
+        
+        if (selectNoneBtn) {
+            selectNoneBtn.addEventListener('click', () => this.selectNoPages());
         }
 
         // Split button
@@ -100,8 +125,9 @@ export class SplitTool {
             this.pageCount = await this.pdfSplitter.getPageCount(file);
             this.currentFile = file;
             
-            // Generate thumbnails
-            this.currentThumbnails = await this.pdfPreview.generateThumbnails(file, 10);
+            // Generate initial thumbnails (more for better preview)
+            const thumbnailCount = Math.min(this.pageCount, 20); // Generate up to 20 thumbnails initially
+            this.currentThumbnails = await this.pdfPreview.generateThumbnails(file, thumbnailCount);
             
             // Update UI
             this.showSplitOptions(file.name, this.pageCount);
@@ -151,6 +177,16 @@ export class SplitTool {
             if (splitMethod === 'all') {
                 // Split into individual pages
                 results = await this.pdfSplitter.splitIntoIndividualPages(this.currentFile);
+            } else if (splitMethod === 'visual') {
+                // Split by visually selected pages
+                const selectedPages = this.getVisuallySelectedPages();
+                if (selectedPages.length === 0) {
+                    throw new Error('Please select at least one page to split');
+                }
+                
+                // Convert selected pages to ranges for splitting
+                const ranges = this.convertPagesToRanges(selectedPages);
+                results = await this.pdfSplitter.splitPDFByPageNumbers(this.currentFile, selectedPages);
             } else {
                 // Split by ranges
                 const pageRanges = document.getElementById('page-ranges').value;
@@ -290,6 +326,13 @@ export class SplitTool {
                     // Don't show preview for invalid ranges
                 }
             }
+        } else if (splitMethod === 'visual') {
+            // Show preview for visually selected pages
+            const selectedPages = this.getVisuallySelectedPages();
+            if (selectedPages.length > 0) {
+                const ranges = this.convertPagesToRanges(selectedPages);
+                this.showSplitPreview(ranges);
+            }
         }
     }
 
@@ -298,7 +341,7 @@ export class SplitTool {
             return;
         }
 
-        const splitPreview = this.pdfPreview.createSplitPreview(this.currentFile, this.currentThumbnails, ranges);
+        const splitPreview = this.pdfPreview.createSplitPreview(this.currentThumbnails, ranges);
         splitPreview.id = 'split-preview';
         
         // Insert after split options section
@@ -355,6 +398,127 @@ export class SplitTool {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    async showVisualPageSelection() {
+        if (!this.currentFile) {
+            return;
+        }
+
+        const container = document.getElementById('split-page-thumbnails');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading-thumbnails">Generating thumbnails...</div>';
+
+        try {
+            // Generate thumbnails for all pages if we don't have them
+            if (!this.currentThumbnails || this.currentThumbnails.thumbnails.length < this.pageCount) {
+                this.currentThumbnails = await this.pdfPreview.generateThumbnails(this.currentFile, this.pageCount);
+            }
+
+            container.innerHTML = '';
+
+            // Create thumbnails for all pages
+            for (let pageNum = 1; pageNum <= this.pageCount; pageNum++) {
+                const thumbnail = this.currentThumbnails.thumbnails.find(t => t.pageNumber === pageNum) ||
+                                this.pdfPreview.createEnhancedPlaceholder(pageNum, this.currentFile.name);
+                
+                const thumbnailElement = this.createPageThumbnailElement(thumbnail, pageNum);
+                container.appendChild(thumbnailElement);
+            }
+        } catch (error) {
+            console.error('Error generating thumbnails:', error);
+            container.innerHTML = '<div class="error-message">Failed to generate thumbnails</div>';
+        }
+    }
+
+    createPageThumbnailElement(thumbnail, pageNum) {
+        const element = document.createElement('div');
+        element.className = 'page-thumbnail selected';
+        element.dataset.pageNumber = pageNum;
+
+        element.innerHTML = `
+            <img src="${thumbnail.dataUrl}" alt="Page ${pageNum}" class="page-thumbnail-image">
+            <div class="page-thumbnail-label">${pageNum}</div>
+            <input type="checkbox" class="page-thumbnail-checkbox" checked data-page="${pageNum}">
+        `;
+
+        // Add click handler
+        element.addEventListener('click', (e) => {
+            if (e.target.type !== 'checkbox') {
+                const checkbox = element.querySelector('.page-thumbnail-checkbox');
+                checkbox.checked = !checkbox.checked;
+            }
+            this.updateThumbnailSelection(element);
+            this.updateSplitPreview();
+        });
+
+        // Add checkbox handler
+        const checkbox = element.querySelector('.page-thumbnail-checkbox');
+        checkbox.addEventListener('change', () => {
+            this.updateThumbnailSelection(element);
+            this.updateSplitPreview();
+        });
+
+        return element;
+    }
+
+    updateThumbnailSelection(element) {
+        const checkbox = element.querySelector('.page-thumbnail-checkbox');
+        if (checkbox.checked) {
+            element.classList.add('selected');
+            element.classList.remove('unselected');
+        } else {
+            element.classList.remove('selected');
+            element.classList.add('unselected');
+        }
+    }
+
+    selectAllPages() {
+        const checkboxes = document.querySelectorAll('#split-page-thumbnails .page-thumbnail-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+            this.updateThumbnailSelection(checkbox.closest('.page-thumbnail'));
+        });
+        this.updateSplitPreview();
+    }
+
+    selectNoPages() {
+        const checkboxes = document.querySelectorAll('#split-page-thumbnails .page-thumbnail-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+            this.updateThumbnailSelection(checkbox.closest('.page-thumbnail'));
+        });
+        this.updateSplitPreview();
+    }
+
+    getVisuallySelectedPages() {
+        const checkboxes = document.querySelectorAll('#split-page-thumbnails .page-thumbnail-checkbox:checked');
+        const pages = [];
+        checkboxes.forEach(checkbox => {
+            pages.push(parseInt(checkbox.dataset.page));
+        });
+        return pages.sort((a, b) => a - b);
+    }
+
+    convertPagesToRanges(pages) {
+        if (pages.length === 0) return [];
+        
+        const ranges = [];
+        let start = pages[0];
+        let end = pages[0];
+        
+        for (let i = 1; i < pages.length; i++) {
+            if (pages[i] === end + 1) {
+                end = pages[i];
+            } else {
+                ranges.push({ start, end });
+                start = end = pages[i];
+            }
+        }
+        ranges.push({ start, end });
+        
+        return ranges;
     }
 
     reset() {
