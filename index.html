@@ -50,7 +50,7 @@
                 
 
                 
-                <div class="tool-card disabled" data-tool="word-convert">
+                <div class="tool-card" data-tool="word-convert">
                     <div class="tool-icon">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -62,7 +62,6 @@
                     </div>
                     <h3>Word to PDF</h3>
                     <p>Convert Word documents to PDF format</p>
-                    <span class="coming-soon">Coming Soon</span>
                 </div>
             </div>
         </section>
@@ -101,6 +100,41 @@
                             Merge PDFs
                         </button>
                         <button type="button" id="clear-btn" class="btn btn-secondary">
+                            Clear All
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Word to PDF Tool -->
+            <div class="tool-container" id="word-convert-tool" style="display: none;">
+                <!-- File Upload Section for Word Conversion -->
+                <section class="upload-section">
+                    <div id="word-drop-zone" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14,2 14,8 20,8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                            </svg>
+                            <h2>Drop Word files here</h2>
+                            <p>or <button type="button" class="browse-btn word-browse-btn">browse files</button></p>
+                            <small>Supports .docx files</small>
+                        </div>
+                        <input type="file" id="word-file-input" accept=".docx" multiple hidden>
+                    </div>
+                </section>
+
+                <!-- Word File List Section -->
+                <section class="word-file-list-section" id="word-file-list-section" style="display: none;">
+                    <h3>Word Documents</h3>
+                    <div id="word-file-list" class="file-list"></div>
+                    <div class="actions">
+                        <button type="button" id="convert-btn" class="btn btn-primary" disabled>
+                            Convert to PDF
+                        </button>
+                        <button type="button" id="word-clear-btn" class="btn btn-secondary">
                             Clear All
                         </button>
                     </div>

@@ -6,7 +6,8 @@ export class ToolManager {
         this.currentTool = 'merge';
         this.tools = {
             merge: document.getElementById('merge-tool'),
-            split: document.getElementById('split-tool')
+            split: document.getElementById('split-tool'),
+            'word-convert': document.getElementById('word-convert-tool')
         };
         this.toolCards = document.querySelectorAll('.tool-card');
         

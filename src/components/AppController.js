@@ -8,6 +8,7 @@ import { UIController } from './UIController.js';
 import { ErrorHandler } from './ErrorHandler.js';
 import { ToolManager } from './ToolManager.js';
 import { SplitTool } from './SplitTool.js';
+import { WordConvertTool } from './WordConvertTool.js';
 
 export class AppController {
     constructor() {
@@ -28,6 +29,7 @@ export class AppController {
         // Initialize tool management
         this.toolManager = new ToolManager();
         this.splitTool = new SplitTool(this.uiController, this.errorHandler);
+        this.wordConvertTool = new WordConvertTool(this.uiController, this.errorHandler);
 
         // Will be initialized in init()
         this.fileUploadHandler = null;
@@ -303,6 +305,8 @@ export class AppController {
             this.handleClearRequest();
         } else if (currentTool === 'split') {
             this.splitTool.reset();
+        } else if (currentTool === 'word-convert') {
+            this.wordConvertTool.reset();
         }
         
         this.uiController.reset();
@@ -319,6 +323,8 @@ export class AppController {
             // Merge tool is already initialized
         } else if (toolName === 'split') {
             // Split tool is already initialized
+        } else if (toolName === 'word-convert') {
+            // Word convert tool is already initialized
         }
         
         console.log(`Switched to ${toolName} tool`);
