@@ -65,6 +65,10 @@ export class PDFProcessor {
                     if (selectedPages && selectedPages.has(file)) {
                         // Use selected pages (convert to 0-based indexing)
                         const pages = selectedPages.get(file);
+                        if (pages.length === 0) {
+                            console.warn(`No pages selected for ${file.name}, skipping`);
+                            continue;
+                        }
                         pageIndices = pages.map(pageNum => pageNum - 1);
                         console.log(`Including pages ${pages.join(', ')} from ${file.name}`);
                     } else {
@@ -72,11 +76,6 @@ export class PDFProcessor {
                         const pageCount = pdf.getPageCount();
                         pageIndices = Array.from({ length: pageCount }, (_, i) => i);
                         console.log(`Including all ${pageCount} pages from ${file.name}`);
-                    }
-                    
-                    if (pageIndices.length === 0) {
-                        console.warn(`No pages selected for ${file.name}, skipping`);
-                        continue;
                     }
                     
                     // Copy selected pages to the merged PDF

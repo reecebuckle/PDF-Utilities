@@ -218,36 +218,43 @@ export class FileListManager {
         
         this.files.forEach(fileItem => {
             const fileId = fileItem.id;
-            const allRadio = document.querySelector(`input[name="pages-${fileId}"][value="all"]`);
             
-            if (allRadio && allRadio.checked) {
-                // All pages selected - don't add to map, let it use default behavior
-                console.log(`All pages selected for ${fileItem.file.name}`);
+            // Get all checkboxes for this file
+            const checkboxes = document.querySelectorAll(`.page-checkbox[data-file-id="${fileId}"]`);
+            
+            if (checkboxes.length === 0) {
+                console.log(`No checkboxes found for ${fileItem.file.name} - this shouldn't happen in advanced mode`);
                 return;
-            } else {
-                // Range or individual pages selected
-                const checkboxes = document.querySelectorAll(`.page-checkbox[data-file-id="${fileId}"]`);
-                const pages = [];
-                checkboxes.forEach(checkbox => {
-                    if (checkbox.checked) {
-                        pages.push(parseInt(checkbox.dataset.pageNumber));
-                    }
-                });
-                
-                // Only add to map if specific pages are selected
-                if (pages.length > 0) {
-                    console.log(`Selected pages ${pages.join(', ')} for ${fileItem.file.name}`);
-                    selectedPages.set(fileItem.file, pages.sort((a, b) => a - b));
-                } else {
-                    console.log(`No pages selected for ${fileItem.file.name}`);
+            }
+            
+            // Get selected pages from checkboxes
+            const pages = [];
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    pages.push(parseInt(checkbox.dataset.pageNumber));
                 }
+            });
+            
+            // Get total pages for this document
+            const thumbnails = this.thumbnailsData.get(fileItem.file);
+            const totalPages = thumbnails ? thumbnails.totalPages : 0;
+            
+            console.log(`${fileItem.file.name}: ${pages.length} of ${totalPages} pages selected (${pages.join(', ')})`);
+            
+            // Always add to selectedPages map in advanced mode
+            if (pages.length > 0) {
+                selectedPages.set(fileItem.file, pages.sort((a, b) => a - b));
+            } else {
+                // If no pages selected, this is an error state - select none
+                console.warn(`No pages selected for ${fileItem.file.name} - will skip this document`);
+                selectedPages.set(fileItem.file, []);
             }
         });
         
-        console.log(`Total files with specific page selections: ${selectedPages.size}`);
+        console.log(`Advanced mode: returning selectedPages map with ${selectedPages.size} files`);
         
-        // If no files have specific page selections, return null (use all pages)
-        return selectedPages.size > 0 ? selectedPages : null;
+        // In advanced mode, always return the selectedPages map (even if empty)
+        return selectedPages;
     }
 
     setupAdvancedToggle() {
