@@ -3,6 +3,16 @@
  */
 import { createPDFDocument } from '../utils/pdfLibLoader.js';
 
+// Import rgb function for PDF-lib colors
+let rgb;
+async function loadRgb() {
+    if (!rgb) {
+        const pdfLib = await import('pdf-lib');
+        rgb = pdfLib.rgb;
+    }
+    return rgb;
+}
+
 export class WordToPDFConverter {
     constructor(onProgress) {
         this.onProgress = onProgress || (() => {});
@@ -116,6 +126,9 @@ export class WordToPDFConverter {
     }
 
     async addTextToPDF(pdfDoc, textContent, fileName) {
+        // Load rgb function
+        const rgbColor = await loadRgb();
+        
         if (textContent.length === 0) {
             // Add a page with a message if no content
             const page = pdfDoc.addPage([612, 792]); // Standard letter size
@@ -123,7 +136,7 @@ export class WordToPDFConverter {
                 x: 50,
                 y: 750,
                 size: 12,
-                color: { r: 0, g: 0, b: 0 }
+                color: rgbColor(0, 0, 0)
             });
             return;
         }
@@ -143,7 +156,7 @@ export class WordToPDFConverter {
             x: margin,
             y: yPosition,
             size: 16,
-            color: { r: 0, g: 0, b: 0 }
+            color: rgbColor(0, 0, 0)
         });
         yPosition -= 40;
         
@@ -167,7 +180,7 @@ export class WordToPDFConverter {
                     x: margin,
                     y: yPosition,
                     size: fontSize,
-                    color: { r: 0, g: 0, b: 0 }
+                    color: rgbColor(0, 0, 0)
                 });
                 
                 yPosition -= lineHeight;
