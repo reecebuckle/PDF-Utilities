@@ -178,12 +178,7 @@
                         
                         <div class="split-method">
                             <input type="radio" id="split-visual" name="split-method" value="visual">
-                            <label for="split-visual">Select pages with checkboxes</label>
-                        </div>
-                        
-                        <div class="split-method">
-                            <input type="radio" id="split-dividers" name="split-method" value="dividers">
-                            <label for="split-dividers">Split visually with dividers</label>
+                            <label for="split-visual">Split visually</label>
                         </div>
                         
                         <div class="split-method">
@@ -192,31 +187,19 @@
                         </div>
                     </div>
 
-                    <!-- Visual Page Selection with Checkboxes -->
+                    <!-- Visual Page Selection with Both Checkboxes and Dividers -->
                     <div class="visual-page-selection" id="visual-page-selection" style="display: none;">
                         <div class="page-selection-header">
-                            <span class="selection-info">Click pages to select/deselect for splitting</span>
+                            <span class="selection-info">Select pages with checkboxes OR click between pages to add split dividers</span>
                             <div class="selection-controls">
                                 <button type="button" class="btn-small" id="select-all-pages">Select All</button>
                                 <button type="button" class="btn-small" id="select-none-pages">Select None</button>
-                            </div>
-                        </div>
-                        <div class="page-thumbnails-container">
-                            <div id="split-page-thumbnails" class="page-thumbnails-grid"></div>
-                        </div>
-                    </div>
-
-                    <!-- Visual Split with Dividers -->
-                    <div class="visual-divider-selection" id="visual-divider-selection" style="display: none;">
-                        <div class="page-selection-header">
-                            <span class="selection-info">Click between pages to add split dividers</span>
-                            <div class="selection-controls">
-                                <button type="button" class="btn-small" id="clear-dividers">Clear All Dividers</button>
+                                <button type="button" class="btn-small" id="clear-dividers">Clear Dividers</button>
                                 <button type="button" class="btn-small" id="add-all-dividers">Split Every Page</button>
                             </div>
                         </div>
                         <div class="page-thumbnails-container">
-                            <div id="split-divider-thumbnails" class="page-thumbnails-row"></div>
+                            <div id="split-page-thumbnails" class="page-thumbnails-combined"></div>
                         </div>
                     </div>
                     

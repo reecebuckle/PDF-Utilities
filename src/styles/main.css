@@ -1305,7 +1305,7 @@ lection */
     padding: 0.5rem;
 }
 
-.page-thumbnails-row {
+.page-thumbnails-row, .page-thumbnails-combined {
     display: flex;
     gap: 0.5rem;
     overflow-x: auto;
