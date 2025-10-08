@@ -247,6 +247,7 @@ export class AppController {
 
             // Get selected pages from file list manager
             const selectedPages = this.fileListManager.getSelectedPages();
+            console.log('Selected pages for merge:', selectedPages);
             
             // Merge PDFs with selected pages
             const mergedPdfBytes = await this.pdfProcessor.mergePDFs(this.state.files, selectedPages);

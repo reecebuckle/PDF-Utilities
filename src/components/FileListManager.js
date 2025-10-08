@@ -208,6 +208,12 @@ export class FileListManager {
 
     // Get selected pages for each file
     getSelectedPages() {
+        // If advanced mode is not enabled, return null (merge all pages)
+        if (!this.showAdvancedSelection) {
+            console.log('Advanced selection disabled, merging all pages');
+            return null;
+        }
+        
         const selectedPages = new Map();
         
         this.files.forEach(fileItem => {
@@ -215,15 +221,9 @@ export class FileListManager {
             const allRadio = document.querySelector(`input[name="pages-${fileId}"][value="all"]`);
             
             if (allRadio && allRadio.checked) {
-                // All pages selected
-                const thumbnails = this.thumbnailsData.get(fileItem.file);
-                if (thumbnails) {
-                    const allPages = [];
-                    for (let i = 1; i <= thumbnails.totalPages; i++) {
-                        allPages.push(i);
-                    }
-                    selectedPages.set(fileItem.file, allPages);
-                }
+                // All pages selected - don't add to map, let it use default behavior
+                console.log(`All pages selected for ${fileItem.file.name}`);
+                return;
             } else {
                 // Range or individual pages selected
                 const checkboxes = document.querySelectorAll(`.page-checkbox[data-file-id="${fileId}"]`);
@@ -233,11 +233,21 @@ export class FileListManager {
                         pages.push(parseInt(checkbox.dataset.pageNumber));
                     }
                 });
-                selectedPages.set(fileItem.file, pages.sort((a, b) => a - b));
+                
+                // Only add to map if specific pages are selected
+                if (pages.length > 0) {
+                    console.log(`Selected pages ${pages.join(', ')} for ${fileItem.file.name}`);
+                    selectedPages.set(fileItem.file, pages.sort((a, b) => a - b));
+                } else {
+                    console.log(`No pages selected for ${fileItem.file.name}`);
+                }
             }
         });
         
-        return selectedPages;
+        console.log(`Total files with specific page selections: ${selectedPages.size}`);
+        
+        // If no files have specific page selections, return null (use all pages)
+        return selectedPages.size > 0 ? selectedPages : null;
     }
 
     setupAdvancedToggle() {
