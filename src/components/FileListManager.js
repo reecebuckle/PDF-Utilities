@@ -13,9 +13,9 @@ export class FileListManager {
         this.pdfPreview = new PDFPreview();
         this.thumbnailsData = new Map();
         this.showPreviews = true;
-        this.showAdvancedSelection = false;
+        this.showAdvancedSelection = true; // Advanced by default
         
-        this.setupAdvancedToggle();
+
     }
 
     async addFiles(newFiles) {
@@ -259,26 +259,7 @@ export class FileListManager {
         return selectedPages;
     }
 
-    setupAdvancedToggle() {
-        // Set up the advanced toggle button
-        setTimeout(() => {
-            const toggleBtn = document.getElementById('advanced-toggle-btn');
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', () => {
-                    this.showAdvancedSelection = !this.showAdvancedSelection;
-                    toggleBtn.classList.toggle('active', this.showAdvancedSelection);
-                    
-                    if (this.showAdvancedSelection) {
-                        toggleBtn.textContent = '📄 Simple: Merge All Pages';
-                    } else {
-                        toggleBtn.textContent = '📄 Advanced: Select Specific Pages';
-                    }
-                    
-                    this.render();
-                });
-            }
-        }, 100);
-    }
+
 
     updateOrder() {
         this.files.forEach((file, index) => {

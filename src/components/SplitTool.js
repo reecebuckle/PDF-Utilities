@@ -13,11 +13,11 @@ export class SplitTool {
         this.pageCount = 0;
         this.currentThumbnails = null;
         this.splitDividers = new Set();
-        
+
         this.pdfSplitter = new PDFSplitter((progress) => {
             this.handleProgress(progress);
         });
-        
+
         this.pdfPreview = new PDFPreview();
 
         this.initializeComponents();
@@ -28,7 +28,7 @@ export class SplitTool {
         // Initialize file upload handler for split tool
         const splitDropZone = document.getElementById('split-drop-zone');
         const splitFileInput = document.getElementById('split-file-input');
-        
+
         if (splitDropZone && splitFileInput) {
             this.fileUploadHandler = new FileUploadHandler(
                 splitDropZone,
@@ -80,11 +80,11 @@ export class SplitTool {
         // Visual selection controls (checkboxes)
         const selectAllBtn = document.getElementById('select-all-pages');
         const selectNoneBtn = document.getElementById('select-none-pages');
-        
+
         if (selectAllBtn) {
             selectAllBtn.addEventListener('click', () => this.selectAllPages());
         }
-        
+
         if (selectNoneBtn) {
             selectNoneBtn.addEventListener('click', () => this.selectNoPages());
         }
@@ -92,11 +92,11 @@ export class SplitTool {
         // Divider selection controls
         const clearDividersBtn = document.getElementById('clear-dividers');
         const addAllDividersBtn = document.getElementById('add-all-dividers');
-        
+
         if (clearDividersBtn) {
             clearDividersBtn.addEventListener('click', () => this.clearAllDividers());
         }
-        
+
         if (addAllDividersBtn) {
             addAllDividersBtn.addEventListener('click', () => this.addAllDividers());
         }
@@ -118,29 +118,29 @@ export class SplitTool {
 
     async handleFileSelected(files) {
         if (files.length === 0) return;
-        
+
         if (files.length > 1) {
             this.errorHandler.showUserError('Please select only one PDF file for splitting');
             return;
         }
 
         const file = files[0];
-        
+
         try {
             // Get page count
             this.pageCount = await this.pdfSplitter.getPageCount(file);
             this.currentFile = file;
-            
+
             // Generate initial thumbnails (more for better preview)
             const thumbnailCount = Math.min(this.pageCount, 20); // Generate up to 20 thumbnails initially
             this.currentThumbnails = await this.pdfPreview.generateThumbnails(file, thumbnailCount);
-            
+
             // Update UI
             this.showSplitOptions(file.name, this.pageCount);
-            
+
             // Show initial preview
             this.updateSplitPreview();
-            
+
         } catch (error) {
             this.errorHandler.handleFileSelectionError(error);
         }
@@ -150,10 +150,10 @@ export class SplitTool {
         // Update file info
         const splitFilename = document.getElementById('split-filename');
         const splitPages = document.getElementById('split-pages');
-        
+
         if (splitFilename) splitFilename.textContent = filename;
         if (splitPages) splitPages.textContent = pageCount;
-        
+
         // Show split options section
         const splitOptionsSection = document.getElementById('split-options-section');
         if (splitOptionsSection) {
@@ -174,12 +174,12 @@ export class SplitTool {
         }
 
         const splitMethod = document.querySelector('input[name="split-method"]:checked').value;
-        
+
         try {
             this.uiController.updateUIState('processing');
-            
+
             let results;
-            
+
             if (splitMethod === 'all') {
                 // Split into individual pages
                 results = await this.pdfSplitter.splitIntoIndividualPages(this.currentFile);
@@ -189,12 +189,12 @@ export class SplitTool {
                 if (selectedPages.length === 0) {
                     throw new Error('Please select at least one page to split');
                 }
-                
+
                 // Check if using dividers
                 if (this.splitDividers && this.splitDividers.size > 0) {
                     // Apply dividers to selected pages only
                     const pageGroups = this.applyDividersToSelectedPages(selectedPages);
-                    
+
                     // Convert page groups to range string format for splitPDF
                     const rangeString = pageGroups.map(group => {
                         if (group.length === 1) {
@@ -205,7 +205,7 @@ export class SplitTool {
                             return this.convertPageGroupToRanges(sortedGroup);
                         }
                     }).join(', ');
-                    
+
                     results = await this.pdfSplitter.splitPDF(this.currentFile, rangeString);
                 } else {
                     // Split by selected pages as individual pages
@@ -219,10 +219,10 @@ export class SplitTool {
                 }
                 results = await this.pdfSplitter.splitPDF(this.currentFile, pageRanges);
             }
-            
+
             // Show results
             this.showSplitResults(results);
-            
+
         } catch (error) {
             this.errorHandler.handleProcessingError(error);
             this.uiController.showError(error.message, true);
@@ -240,7 +240,7 @@ export class SplitTool {
         const resultDownloads = document.getElementById('result-downloads');
         if (resultDownloads) {
             resultDownloads.innerHTML = '';
-            
+
             results.forEach((result, index) => {
                 const downloadItem = this.createDownloadItem(result, index);
                 resultDownloads.appendChild(downloadItem);
@@ -264,7 +264,7 @@ export class SplitTool {
     createDownloadItem(result, index) {
         const item = document.createElement('div');
         item.className = 'download-item';
-        
+
         item.innerHTML = `
             <div class="download-info">
                 <div class="download-name">${result.filename}</div>
@@ -272,28 +272,28 @@ export class SplitTool {
             </div>
             <button class="download-btn-small" data-index="${index}">Download</button>
         `;
-        
+
         const downloadBtn = item.querySelector('.download-btn-small');
         downloadBtn.addEventListener('click', () => {
             this.downloadFile(result);
         });
-        
+
         return item;
     }
 
     downloadFile(result) {
         const blob = new Blob([result.data], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
-        
+
         const link = document.createElement('a');
         link.href = url;
         link.download = result.filename;
         link.style.display = 'none';
-        
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         // Clean up
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
@@ -303,13 +303,13 @@ export class SplitTool {
             // For now, download files individually
             // TODO: Implement ZIP creation when we add a ZIP library
             this.uiController.showNotification('Downloading files individually...', 'info');
-            
+
             results.forEach((result, index) => {
                 setTimeout(() => {
                     this.downloadFile(result);
                 }, index * 500); // Stagger downloads
             });
-            
+
         } catch (error) {
             this.errorHandler.handleProcessingError(error);
         }
@@ -331,7 +331,7 @@ export class SplitTool {
         }
 
         const splitMethod = document.querySelector('input[name="split-method"]:checked')?.value;
-        
+
         if (splitMethod === 'all') {
             // Show preview for all individual pages
             const ranges = [];
@@ -374,7 +374,7 @@ export class SplitTool {
 
         const splitPreview = this.pdfPreview.createSplitPreview(this.currentThumbnails, ranges);
         splitPreview.id = 'split-preview';
-        
+
         // Insert after split options section
         const splitOptionsSection = document.getElementById('split-options-section');
         if (splitOptionsSection) {
@@ -387,48 +387,48 @@ export class SplitTool {
         this.pageCount = 0;
         this.currentThumbnails = null;
         this.splitDividers = new Set();
-        
+
         // Remove preview
         const splitPreview = document.getElementById('split-preview');
         if (splitPreview) {
             splitPreview.remove();
         }
-        
+
         // Hide split options
         const splitOptionsSection = document.getElementById('split-options-section');
         if (splitOptionsSection) {
             splitOptionsSection.style.display = 'none';
         }
-        
+
         // Reset form
         const pageRangesInput = document.getElementById('page-ranges');
         if (pageRangesInput) {
             pageRangesInput.value = '';
         }
-        
+
         const splitRanges = document.getElementById('split-ranges');
         if (splitRanges) {
             splitRanges.checked = true;
         }
-        
+
         // Reset file upload handler
         if (this.fileUploadHandler) {
             this.fileUploadHandler.reset();
         }
-        
+
         // Hide shared sections
         this.uiController.reset();
-        
+
         this.uiController.showNotification('Cleared', 'info');
     }
 
     formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
-        
+
         const k = 1024;
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
-        
+
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
@@ -453,8 +453,8 @@ export class SplitTool {
             // Create thumbnails for all pages
             for (let pageNum = 1; pageNum <= this.pageCount; pageNum++) {
                 const thumbnail = this.currentThumbnails.thumbnails.find(t => t.pageNumber === pageNum) ||
-                                this.pdfPreview.createEnhancedPlaceholder(pageNum, this.currentFile.name);
-                
+                    this.pdfPreview.createEnhancedPlaceholder(pageNum, this.currentFile.name);
+
                 const thumbnailElement = this.createPageThumbnailElement(thumbnail, pageNum);
                 container.appendChild(thumbnailElement);
             }
@@ -535,11 +535,11 @@ export class SplitTool {
 
     convertPagesToRanges(pages) {
         if (pages.length === 0) return [];
-        
+
         const ranges = [];
         let start = pages[0];
         let end = pages[0];
-        
+
         for (let i = 1; i < pages.length; i++) {
             if (pages[i] === end + 1) {
                 end = pages[i];
@@ -549,7 +549,7 @@ export class SplitTool {
             }
         }
         ranges.push({ start, end });
-        
+
         return ranges;
     }
 
@@ -585,8 +585,8 @@ export class SplitTool {
         // Create thumbnails with both checkboxes and divider placeholders
         for (let pageNum = 1; pageNum <= this.pageCount; pageNum++) {
             const thumbnail = this.currentThumbnails.thumbnails.find(t => t.pageNumber === pageNum) ||
-                            this.pdfPreview.createEnhancedPlaceholder(pageNum, this.currentFile.name);
-            
+                this.pdfPreview.createEnhancedPlaceholder(pageNum, this.currentFile.name);
+
             // Create thumbnail element with checkbox
             const thumbnailElement = this.createCombinedThumbnailElement(thumbnail, pageNum);
             container.appendChild(thumbnailElement);
@@ -658,7 +658,7 @@ export class SplitTool {
         if (!this.splitDividers) {
             this.splitDividers = new Set();
         }
-        
+
         if (this.splitDividers.has(afterPage)) {
             // Remove divider
             this.splitDividers.delete(afterPage);
@@ -670,7 +670,7 @@ export class SplitTool {
             placeholderElement.className = 'split-divider';
             placeholderElement.title = `Click to remove split after page ${afterPage}`;
         }
-        
+
         this.updateSplitPreview();
     }
 
@@ -679,7 +679,7 @@ export class SplitTool {
             this.splitDividers = new Set();
         }
         this.splitDividers.clear();
-        
+
         // Update all divider elements
         const dividerElements = document.querySelectorAll('#split-divider-thumbnails .split-divider, #split-divider-thumbnails .split-divider-placeholder');
         dividerElements.forEach(element => {
@@ -687,7 +687,7 @@ export class SplitTool {
             element.className = 'split-divider-placeholder';
             element.title = `Click to split after page ${afterPage}`;
         });
-        
+
         this.updateSplitPreview();
     }
 
@@ -695,12 +695,12 @@ export class SplitTool {
         if (!this.splitDividers) {
             this.splitDividers = new Set();
         }
-        
+
         // Add dividers after every page except the last
         for (let pageNum = 1; pageNum < this.pageCount; pageNum++) {
             this.splitDividers.add(pageNum);
         }
-        
+
         // Update all divider elements
         const dividerElements = document.querySelectorAll('#split-divider-thumbnails .split-divider, #split-divider-thumbnails .split-divider-placeholder');
         dividerElements.forEach(element => {
@@ -710,7 +710,7 @@ export class SplitTool {
                 element.title = `Click to remove split after page ${afterPage}`;
             }
         });
-        
+
         this.updateSplitPreview();
     }
 
@@ -719,17 +719,17 @@ export class SplitTool {
             // No dividers, return each page as individual group
             return selectedPages.map(page => [page]);
         }
-        
+
         // Sort selected pages and dividers
         const sortedPages = [...selectedPages].sort((a, b) => a - b);
         const sortedDividers = Array.from(this.splitDividers).sort((a, b) => a - b);
-        
+
         const groups = [];
         let currentGroup = [];
-        
+
         for (const page of sortedPages) {
             currentGroup.push(page);
-            
+
             // Check if there's a divider after this page
             if (sortedDividers.includes(page)) {
                 // End current group and start new one
@@ -739,12 +739,12 @@ export class SplitTool {
                 }
             }
         }
-        
+
         // Add remaining pages to final group
         if (currentGroup.length > 0) {
             groups.push(currentGroup);
         }
-        
+
         return groups;
     }
 
@@ -752,12 +752,12 @@ export class SplitTool {
         if (pageGroup.length === 1) {
             return pageGroup[0].toString();
         }
-        
+
         // Check if pages are consecutive
         let ranges = [];
         let start = pageGroup[0];
         let end = pageGroup[0];
-        
+
         for (let i = 1; i < pageGroup.length; i++) {
             if (pageGroup[i] === end + 1) {
                 end = pageGroup[i];
@@ -767,10 +767,10 @@ export class SplitTool {
                 start = end = pageGroup[i];
             }
         }
-        
+
         // Add final range
         ranges.push(start === end ? start.toString() : `${start}-${end}`);
-        
+
         return ranges.join(', ');
     }
 
@@ -780,7 +780,7 @@ export class SplitTool {
         if (selectedPages.length === 0) {
             return [];
         }
-        
+
         const pageGroups = this.applyDividersToSelectedPages(selectedPages);
         return pageGroups.map(group => ({
             start: Math.min(...group),
