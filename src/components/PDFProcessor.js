@@ -23,7 +23,7 @@ export class PDFProcessor {
         }
     }
 
-    async mergePDFs(files) {
+    async mergePDFs(files, selectedPages = null) {
         if (this.isProcessing) {
             throw new Error('PDF processing is already in progress');
         }
@@ -32,8 +32,8 @@ export class PDFProcessor {
             throw new Error('No files provided for merging');
         }
 
-        if (files.length === 1) {
-            // If only one file, just return it as-is
+        if (files.length === 1 && (!selectedPages || !selectedPages.has(files[0]))) {
+            // If only one file and no page selection, just return it as-is
             return await this.fileToUint8Array(files[0]);
         }
 
@@ -60,11 +60,26 @@ export class PDFProcessor {
                     // Load the PDF
                     const pdf = await loadPDFFromBytes(uint8Array);
                     
-                    // Get all pages from the source PDF
-                    const pageCount = pdf.getPageCount();
-                    const pageIndices = Array.from({ length: pageCount }, (_, i) => i);
+                    // Determine which pages to include
+                    let pageIndices;
+                    if (selectedPages && selectedPages.has(file)) {
+                        // Use selected pages (convert to 0-based indexing)
+                        const pages = selectedPages.get(file);
+                        pageIndices = pages.map(pageNum => pageNum - 1);
+                        console.log(`Including pages ${pages.join(', ')} from ${file.name}`);
+                    } else {
+                        // Use all pages
+                        const pageCount = pdf.getPageCount();
+                        pageIndices = Array.from({ length: pageCount }, (_, i) => i);
+                        console.log(`Including all ${pageCount} pages from ${file.name}`);
+                    }
                     
-                    // Copy pages to the merged PDF
+                    if (pageIndices.length === 0) {
+                        console.warn(`No pages selected for ${file.name}, skipping`);
+                        continue;
+                    }
+                    
+                    // Copy selected pages to the merged PDF
                     const copiedPages = await mergedPdf.copyPages(pdf, pageIndices);
                     
                     // Add each page to the merged document

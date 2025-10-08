@@ -13,6 +13,9 @@ export class FileListManager {
         this.pdfPreview = new PDFPreview();
         this.thumbnailsData = new Map();
         this.showPreviews = true;
+        this.showAdvancedSelection = false;
+        
+        this.setupAdvancedToggle();
     }
 
     async addFiles(newFiles) {
@@ -90,6 +93,174 @@ export class FileListManager {
         this.render();
     }
 
+    setupPageSelectionListeners(previewDiv, fileId, totalPages) {
+        const radioButtons = previewDiv.querySelectorAll(`input[name="pages-${fileId}"]`);
+        const rangeInput = previewDiv.querySelector('.page-range-input');
+        const checkboxes = previewDiv.querySelectorAll('.page-checkbox');
+        
+        // Handle radio button changes
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (radio.value === 'all') {
+                    rangeInput.disabled = true;
+                    rangeInput.value = '';
+                    // Check all checkboxes
+                    checkboxes.forEach(cb => cb.checked = true);
+                } else if (radio.value === 'range') {
+                    rangeInput.disabled = false;
+                    rangeInput.focus();
+                }
+            });
+        });
+        
+        // Handle range input changes
+        rangeInput.addEventListener('input', () => {
+            this.updateCheckboxesFromRange(rangeInput.value, checkboxes, totalPages);
+        });
+        
+        // Handle individual checkbox changes
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                this.updateRangeFromCheckboxes(checkboxes, rangeInput);
+            });
+        });
+    }
+
+    updateCheckboxesFromRange(rangeText, checkboxes, totalPages) {
+        // Parse range text and update checkboxes
+        try {
+            const selectedPages = this.parsePageRanges(rangeText, totalPages);
+            checkboxes.forEach(checkbox => {
+                const pageNum = parseInt(checkbox.dataset.pageNumber);
+                checkbox.checked = selectedPages.includes(pageNum);
+            });
+        } catch (error) {
+            // Invalid range, don't update checkboxes
+        }
+    }
+
+    updateRangeFromCheckboxes(checkboxes, rangeInput) {
+        const selectedPages = [];
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                selectedPages.push(parseInt(checkbox.dataset.pageNumber));
+            }
+        });
+        
+        // Convert selected pages to range text
+        rangeInput.value = this.pagesToRangeText(selectedPages);
+    }
+
+    parsePageRanges(rangeText, totalPages) {
+        const pages = [];
+        const parts = rangeText.split(',').map(part => part.trim());
+        
+        for (const part of parts) {
+            if (part === '') continue;
+            
+            if (part.includes('-')) {
+                const [start, end] = part.split('-').map(s => parseInt(s.trim()));
+                if (!isNaN(start) && !isNaN(end) && start >= 1 && end <= totalPages && start <= end) {
+                    for (let i = start; i <= end; i++) {
+                        if (!pages.includes(i)) pages.push(i);
+                    }
+                }
+            } else {
+                const pageNum = parseInt(part);
+                if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
+                    if (!pages.includes(pageNum)) pages.push(pageNum);
+                }
+            }
+        }
+        
+        return pages.sort((a, b) => a - b);
+    }
+
+    pagesToRangeText(pages) {
+        if (pages.length === 0) return '';
+        
+        pages.sort((a, b) => a - b);
+        const ranges = [];
+        let start = pages[0];
+        let end = pages[0];
+        
+        for (let i = 1; i < pages.length; i++) {
+            if (pages[i] === end + 1) {
+                end = pages[i];
+            } else {
+                if (start === end) {
+                    ranges.push(start.toString());
+                } else {
+                    ranges.push(`${start}-${end}`);
+                }
+                start = end = pages[i];
+            }
+        }
+        
+        if (start === end) {
+            ranges.push(start.toString());
+        } else {
+            ranges.push(`${start}-${end}`);
+        }
+        
+        return ranges.join(', ');
+    }
+
+    // Get selected pages for each file
+    getSelectedPages() {
+        const selectedPages = new Map();
+        
+        this.files.forEach(fileItem => {
+            const fileId = fileItem.id;
+            const allRadio = document.querySelector(`input[name="pages-${fileId}"][value="all"]`);
+            
+            if (allRadio && allRadio.checked) {
+                // All pages selected
+                const thumbnails = this.thumbnailsData.get(fileItem.file);
+                if (thumbnails) {
+                    const allPages = [];
+                    for (let i = 1; i <= thumbnails.totalPages; i++) {
+                        allPages.push(i);
+                    }
+                    selectedPages.set(fileItem.file, allPages);
+                }
+            } else {
+                // Range or individual pages selected
+                const checkboxes = document.querySelectorAll(`.page-checkbox[data-file-id="${fileId}"]`);
+                const pages = [];
+                checkboxes.forEach(checkbox => {
+                    if (checkbox.checked) {
+                        pages.push(parseInt(checkbox.dataset.pageNumber));
+                    }
+                });
+                selectedPages.set(fileItem.file, pages.sort((a, b) => a - b));
+            }
+        });
+        
+        return selectedPages;
+    }
+
+    setupAdvancedToggle() {
+        // Set up the advanced toggle button
+        setTimeout(() => {
+            const toggleBtn = document.getElementById('advanced-toggle-btn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    this.showAdvancedSelection = !this.showAdvancedSelection;
+                    toggleBtn.classList.toggle('active', this.showAdvancedSelection);
+                    
+                    if (this.showAdvancedSelection) {
+                        toggleBtn.textContent = '📄 Simple: Merge All Pages';
+                    } else {
+                        toggleBtn.textContent = '📄 Advanced: Select Specific Pages';
+                    }
+                    
+                    this.render();
+                });
+            }
+        }, 100);
+    }
+
     updateOrder() {
         this.files.forEach((file, index) => {
             file.order = index;
@@ -142,12 +313,35 @@ export class FileListManager {
             const previewDiv = document.createElement('div');
             previewDiv.className = 'file-item-preview';
             
+            // Add page selection controls (only if advanced mode is enabled)
+            let pageSelectionDiv = null;
+            if (this.showAdvancedSelection) {
+                pageSelectionDiv = document.createElement('div');
+                pageSelectionDiv.className = 'page-selection-controls';
+                pageSelectionDiv.innerHTML = `
+                    <div class="page-selection-header">
+                        <label class="page-selection-label">
+                            <input type="radio" name="pages-${fileItem.id}" value="all" checked>
+                            All pages (1-${thumbnails.totalPages})
+                        </label>
+                        <label class="page-selection-label">
+                            <input type="radio" name="pages-${fileItem.id}" value="range">
+                            Page range:
+                        </label>
+                        <input type="text" class="page-range-input" placeholder="e.g., 1-5, 8, 10-12" 
+                               data-file-id="${fileItem.id}" disabled>
+                    </div>
+                `;
+            }
+            
             const thumbnailGrid = document.createElement('div');
             thumbnailGrid.className = 'thumbnail-grid';
             
             thumbnails.thumbnails.forEach(thumbnail => {
                 const thumbnailItem = document.createElement('div');
-                thumbnailItem.className = 'thumbnail-item';
+                thumbnailItem.className = this.showAdvancedSelection ? 'thumbnail-item selectable' : 'thumbnail-item';
+                thumbnailItem.dataset.pageNumber = thumbnail.pageNumber;
+                thumbnailItem.dataset.fileId = fileItem.id;
                 
                 const img = document.createElement('img');
                 img.src = thumbnail.dataUrl;
@@ -157,6 +351,17 @@ export class FileListManager {
                 const pageLabel = document.createElement('div');
                 pageLabel.className = 'page-label';
                 pageLabel.textContent = thumbnail.pageNumber;
+                
+                // Add selection checkbox only in advanced mode
+                if (this.showAdvancedSelection) {
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'page-checkbox';
+                    checkbox.checked = true; // All pages selected by default
+                    checkbox.dataset.pageNumber = thumbnail.pageNumber;
+                    checkbox.dataset.fileId = fileItem.id;
+                    thumbnailItem.appendChild(checkbox);
+                }
                 
                 thumbnailItem.appendChild(img);
                 thumbnailItem.appendChild(pageLabel);
@@ -170,8 +375,16 @@ export class FileListManager {
                 thumbnailGrid.appendChild(moreIndicator);
             }
             
+            if (pageSelectionDiv) {
+                previewDiv.appendChild(pageSelectionDiv);
+            }
             previewDiv.appendChild(thumbnailGrid);
             div.appendChild(previewDiv);
+            
+            // Set up page selection event listeners (only in advanced mode)
+            if (this.showAdvancedSelection) {
+                this.setupPageSelectionListeners(previewDiv, fileItem.id, thumbnails.totalPages);
+            }
         }
 
         this.setupDragAndDrop(div);

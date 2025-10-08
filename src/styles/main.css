@@ -1313,4 +1313,134 @@ re split browse button matches merge browse button */
 
 #result-downloads .btn:last-child {
     margin-right: 0;
+}/* Pag
+e Selection Controls */
+.page-selection-controls {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.page-selection-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.page-selection-label {
+    display: flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.page-selection-label input[type="radio"] {
+    margin-right: 0.5rem;
+}
+
+.page-range-input {
+    margin-left: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 0.85rem;
+    width: 200px;
+}
+
+.page-range-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-range-input:focus {
+    outline: none;
+    border-color: rgba(102, 126, 234, 0.8);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.page-range-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Selectable Thumbnails */
+.thumbnail-item.selectable {
+    position: relative;
+    cursor: pointer;
+}
+
+.thumbnail-item.selectable:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.page-checkbox {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.thumbnail-item.selectable .thumbnail-image {
+    transition: opacity 0.2s ease;
+}
+
+.thumbnail-item.selectable:has(.page-checkbox:not(:checked)) .thumbnail-image {
+    opacity: 0.4;
+}
+
+.thumbnail-item.selectable:has(.page-checkbox:not(:checked)) {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* Advanced merge toggle */
+.advanced-merge-toggle {
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.advanced-toggle-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.advanced-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.advanced-toggle-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: rgba(102, 126, 234, 0.8);
+    color: #ffffff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .page-selection-header {
+        gap: 0.75rem;
+    }
+    
+    .page-range-input {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 0.25rem;
+    }
+    
+    .page-selection-label {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }

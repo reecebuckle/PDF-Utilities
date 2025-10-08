@@ -48,18 +48,7 @@
                     <p>Extract pages or split PDF into multiple files</p>
                 </div>
                 
-                <div class="tool-card disabled" data-tool="advanced-merge">
-                    <div class="tool-icon">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14,2 14,8 20,8"></polyline>
-                            <rect x="8" y="13" width="8" height="4"></rect>
-                        </svg>
-                    </div>
-                    <h3>Advanced Merge</h3>
-                    <p>Select specific pages from multiple PDFs</p>
-                    <span class="coming-soon">Coming Soon</span>
-                </div>
+
                 
                 <div class="tool-card disabled" data-tool="word-convert">
                     <div class="tool-icon">
@@ -101,6 +90,11 @@
                 <!-- File List Section -->
                 <section class="file-list-section" id="file-list-section" style="display: none;">
                     <h3>Selected Files</h3>
+                    <div class="advanced-merge-toggle">
+                        <button type="button" id="advanced-toggle-btn" class="advanced-toggle-btn">
+                            📄 Advanced: Select Specific Pages
+                        </button>
+                    </div>
                     <div id="file-list" class="file-list"></div>
                     <div class="actions">
                         <button type="button" id="merge-btn" class="btn btn-primary" disabled>

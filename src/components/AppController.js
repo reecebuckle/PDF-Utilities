@@ -243,8 +243,11 @@ export class AppController {
                 throw new Error(errorMessage);
             }
 
-            // Merge PDFs
-            const mergedPdfBytes = await this.pdfProcessor.mergePDFs(this.state.files);
+            // Get selected pages from file list manager
+            const selectedPages = this.fileListManager.getSelectedPages();
+            
+            // Merge PDFs with selected pages
+            const mergedPdfBytes = await this.pdfProcessor.mergePDFs(this.state.files, selectedPages);
             
             // Create download
             const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
